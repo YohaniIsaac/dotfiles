@@ -1,0 +1,62 @@
+format = """
+$username$python$directory$git_branch$git_status
+$character"""
+
+palette = "dracula"
+
+[aws]
+disabled = true
+
+[character]
+error_symbol = "[❯](bold red)"
+success_symbol = "[❯](bold green)"
+
+[cmd_duration]
+style = "bold yellow"
+
+[directory]
+truncation_length = 100
+truncate_to_repo = false
+style = "bold cyan"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+style = "bold pink"
+
+[git_status]
+format = '([$untracked](bold purple)[$modified](bold orange)[$staged](bold green)[$renamed](bold yellow)[$deleted](bold red)[$ahead_behind](bold cyan)) '
+untracked = "●"
+modified = "⚡"
+staged = "✓"
+renamed = "➜"
+deleted = "✗"
+
+[hostname]
+disabled = true
+
+[username]
+format = "[$user]($style) "
+style_user = "bold cyan"
+
+[python]
+format = "[.venv]($style) "
+style = "bold yellow"
+detect_extensions = []
+detect_files = []
+detect_folders = []
+python_binary = []
+symbol = "🐍 "
+
+[palettes.dracula]
+background = "#282a36"
+current_line = "#44475a"
+foreground = "#f8f8f2"
+comment = "#6272a4"
+cyan = "#8be9fd"
+green = "#50fa7b"
+orange = "#ffb86c"
+pink = "#ff79c6"
+purple = "#bd93f9"
+red = "#ff5555"
+yellow = "#f1fa8c"

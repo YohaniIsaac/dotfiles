@@ -1,0 +1,31 @@
+{
+  "custom/quicklink_browser": {
+    "format": "",
+    "on-click": "brave-browser",
+    "tooltip-format": "Open Browser"
+  },
+  "custom/quicklink_filemanager": {
+    "format": "",
+    "on-click": "thunar",
+    "tooltip-format": "Open Filemanager"
+  },
+  "custom/quicklink_email": {
+    "format": "",
+    "on-click": "thunderbird",
+    "tooltip-format": "Open Email Client"
+  },
+  "custom/quicklink_calculator": {
+    "format": "",
+    "on-click": "qalculate-gtk",
+    "tooltip-format": "Open Calculator"
+  },
+  "custom/quicklinkempty": {},
+  "group/quicklinks": {
+    "orientation": "horizontal",
+    "modules": [
+      "custom/quicklink_browser",
+      "custom/quicklink_filemanager",
+      "custom/quicklinkempty"
+    ]
+  }
+}

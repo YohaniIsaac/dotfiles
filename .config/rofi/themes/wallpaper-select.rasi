@@ -1,0 +1,56 @@
+/* Wallpaper Select */
+
+* {
+    text-color: rgba(224, 226, 232, 100%);
+    background-color: transparent;
+    padding: 0px;
+    margin: 0px;
+    spacing: 0px;
+}
+
+window {
+    fullscreen: true;
+    background-color: rgba(0, 0, 0, 60%);
+    transparency: "real";
+}
+
+mainbox {
+    children: [ listview ];
+    background-color: transparent;
+    padding: 64px;
+    spacing: 24px;
+}
+
+listview {
+    columns: 4;
+    lines: 4;
+    cycle: true;
+    fixed-columns: true;
+    fixed-height: true;
+    background-color: transparent;
+}
+
+element-icon {
+    size: 26%;
+    background-color: transparent;
+}
+
+element normal.normal {
+    background-color: transparent;
+}
+
+element selected.normal {
+    background-color: rgba(255, 255, 255, 20%);
+    border: 2px;
+    border-color: rgba(154, 203, 250, 80%);
+    border-radius: 24px;
+}
+
+element alternate.normal {
+    background-color: transparent;
+}
+
+element-text {
+    background-color: transparent;
+    text-color: inherit;
+}

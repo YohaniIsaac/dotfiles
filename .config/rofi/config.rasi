@@ -1,0 +1,20 @@
+/* ---- Rofi Config ---- */
+/* Rounded-dark theme with matugen colors */
+
+configuration {
+    show-icons: true;
+    icon-theme: "Adwaita";
+    drun-display-format: "{name}";
+    display-drun: "Apps";
+    font: "JetBrainsMono Nerd Font SemiBold 13";
+}
+
+/* Import matugen colors */
+@import "/home/yt/.config/rofi/colors.rasi"
+
+/* Import rounded-dark theme */
+@import "/home/yt/.local/share/rofi/themes/rounded-dark.rasi"
+
+window {
+    border-color: @border;
+}

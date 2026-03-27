@@ -1,0 +1,35 @@
+{
+    "layer": "top",
+    "margin-top": 8,
+    "margin-bottom": 0,
+    "margin-left": 8,
+    "margin-right": 8,
+    "spacing": 0,
+    "include": [
+        "~/.config/waybar/quicklinks.json",
+        "~/.config/waybar/modules.json"
+    ],
+    "modules-left": [
+        "custom/weather",
+        "clock",
+        "wlr/taskbar",
+        "custom/empty"
+    ],
+    "modules-center": [
+        "hyprland/workspaces",
+        "custom/empty"
+    ],
+    "modules-right": [
+        "tray",
+        "group/mobo_drawer",
+        "custom/separator#line",
+        "wireplumber",
+        "group/audio_drawer",
+        "custom/separator#line",
+        "network",
+        "bluetooth",
+        "battery",
+        "custom/notification",
+        "custom/exit"
+    ]
+}

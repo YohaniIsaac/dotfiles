@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+## Generate color cache for wallpaper selector
+## Pre-generates all wallpaper + color_index + scheme combinations
+
+set -e
+
+WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+CACHE_FILE="$HOME/.config/hypr/wallpaper-colors.json"
+SCHEMES=("scheme-tonal-spot" "scheme-vibrant" "scheme-expressive" "scheme-content" "scheme-fidelity" "scheme-fruit-salad" "scheme-monochrome" "scheme-neutral")
+COLOR_INDICES=(0 1 2 3 4 5)
+
+# Save current wallpaper to restore later
+ORIGINAL_WALLPAPER=""
+if command -v swww &>/dev/null; then
+    ORIGINAL_WALLPAPER=$(swww img -l 2>/dev/null | grep "currently displaying" | sed 's/.*image: //' || true)
+fi
+
+# Cleanup function to restore wallpaper on exit
+restore_wallpaper() {
+    if [[ -n "$ORIGINAL_WALLPAPER" ]] && [[ -f "$ORIGINAL_WALLPAPER" ]]; then
+        echo "Restoring original wallpaper..."
+        swww img "$ORIGINAL_WALLPAPER" --transition-type center --transition-duration 1 2>/dev/null || true
+    fi
+}
+trap restore_wallpaper EXIT
+
+echo "=== Wallpaper Color Cache Generator ==="
+echo "Wallpaper directory: $WALLPAPER_DIR"
+echo "Cache file: $CACHE_FILE"
+echo ""
+
+# Detect current wallpapers
+current_count=$(find -L "$WALLPAPER_DIR" -type f \( -iname \*.jpg -o -iname \*.jpeg -o -iname \*.png -o -iname \*.gif \) | wc -l)
+echo "Current wallpapers: $current_count"
+
+# Check if cache exists and compare
+if [[ -f "$CACHE_FILE" ]]; then
+    cached_count=$(grep -o '"wallpaper_count"' "$CACHE_FILE" | wc -l)
+    if [[ $cached_count -eq 0 ]]; then
+        cached_count=$(python3 -c "import json; data=json.load(open('$CACHE_FILE')); print(len(data.get('wallpapers', {})))" 2>/dev/null || echo "0")
+    fi
+    echo "Cached wallpapers: $cached_count"
+    
+    if [[ "$current_count" -eq "$cached_count" ]]; then
+        echo "No changes detected. Cache is up to date."
+        echo "Use --force to regenerate anyway."
+        exit 0
+    fi
+fi
+
+echo "Changes detected. Regenerating cache..."
+echo ""
+
+# Create temp directory for swatches
+SWATCH_DIR="$HOME/.cache/hypr-wallpapers"
+mkdir -p "$SWATCH_DIR"
+
+# Initialize JSON structure
+echo '{' > "$CACHE_FILE"
+echo '  "version": "1.0",' >> "$CACHE_FILE"
+echo '  "wallpapers": {' >> "$CACHE_FILE"
+
+wallpapers=($(find -L "$WALLPAPER_DIR" -type f \( -iname \*.jpg -o -iname \*.jpeg -o -iname \*.png -o -iname \*.gif \) | sort))
+total=${#wallpapers[@]}
+current=0
+
+for wallpaper in "${wallpapers[@]}"; do
+    current=$((current + 1))
+    echo "Processing [$current/$total]: $(basename "$wallpaper")"
+    
+    # Get absolute path
+    abs_path=$(readlink -f "$wallpaper")
+    json_key=$(basename "$wallpaper")
+    
+    # Start wallpaper entry
+    if [[ $current -gt 1 ]]; then
+        echo "," >> "$CACHE_FILE"
+    fi
+    echo "    \"$json_key\": {" >> "$CACHE_FILE"
+    
+    # Extract colors for each index (0-5)
+    echo '      "colors": {' >> "$CACHE_FILE"
+    color_results=()
+    
+    for idx in "${COLOR_INDICES[@]}"; do
+        color_hex=""
+        # Use --show-colors to get the source color (this will apply wallpaper temporarily)
+        result=$(matugen image "$wallpaper" --source-color-index "$idx" --show-colors 2>&1 | grep "source_color" | tail -1 || true)
+        if [[ -n "$result" ]]; then
+            color_hex=$(echo "$result" | grep -o '#[0-9a-fA-F]\{6\}' | head -1 || true)
+        fi
+        
+        # Fallback: if empty, use default
+        if [[ -z "$color_hex" ]]; then
+            color_hex="#000000"
+        fi
+        
+        color_results+=("$color_hex")
+        
+        if [[ $idx -lt 5 ]]; then
+            echo "        \"$idx\": \"$color_hex\"," >> "$CACHE_FILE"
+        else
+            echo "        \"$idx\": \"$color_hex\"" >> "$CACHE_FILE"
+        fi
+    done
+    echo '      },' >> "$CACHE_FILE"
+    
+    # Generate schemes for each color index
+    echo '      "schemes": {' >> "$CACHE_FILE"
+    
+    scheme_count=0
+    for scheme in "${SCHEMES[@]}"; do
+        scheme_count=$((scheme_count + 1))
+        scheme_name=$(basename "$scheme")
+        
+        if [[ $scheme_count -gt 1 ]]; then
+            echo "," >> "$CACHE_FILE"
+        fi
+        echo "        \"$scheme\": {" >> "$CACHE_FILE"
+        
+        # Generate palette for each color index
+        for idx in "${COLOR_INDICES[@]}"; do
+            # Get colors for this combination
+            output=$(matugen image "$wallpaper" -m dark -t "$scheme" --source-color-index "$idx" --show-colors 2>&1 || true)
+            
+            primary=$(echo "$output" | grep "^│ *primary " | sed 's/│/ /g' | awk '{print $2}' | tr -d ' ' || echo "#000000")
+            secondary=$(echo "$output" | grep "^│ *secondary " | sed 's/│/ /g' | awk '{print $2}' | tr -d ' ' || echo "#000000")
+            tertiary=$(echo "$output" | grep "^│ *tertiary " | sed 's/│/ /g' | awk '{print $2}' | tr -d ' ' || echo "#000000")
+            
+            # Fallback if empty
+            primary="${primary:-#000000}"
+            secondary="${secondary:-#000000}"
+            tertiary="${tertiary:-#000000}"
+            
+            if [[ $idx -lt 5 ]]; then
+                echo "          \"$idx\": { \"primary\": \"$primary\", \"secondary\": \"$secondary\", \"tertiary\": \"$tertiary\" }," >> "$CACHE_FILE"
+            else
+                echo "          \"$idx\": { \"primary\": \"$primary\", \"secondary\": \"$secondary\", \"tertiary\": \"$tertiary\" }" >> "$CACHE_FILE"
+            fi
+        done
+        
+        echo -n "        }" >> "$CACHE_FILE"
+    done
+    
+    echo '' >> "$CACHE_FILE"
+    echo '      }' >> "$CACHE_FILE"
+    echo -n '    }' >> "$CACHE_FILE"
+done
+
+echo '' >> "$CACHE_FILE"
+echo '  },' >> "$CACHE_FILE"
+echo "  \"generated_at\": \"$(date -Iseconds)\"," >> "$CACHE_FILE"
+echo "  \"wallpaper_count\": $current_count" >> "$CACHE_FILE"
+echo '}' >> "$CACHE_FILE"
+
+echo ""
+echo "=== Cache Generated Successfully ==="
+echo "Cache file: $CACHE_FILE"
+echo "Total wallpapers: $current_count"
+echo "Color indices: ${#COLOR_INDICES[@]}"
+echo "Schemes: ${#SCHEMES[@]}"
+echo "Total combinations: $((current_count * ${#COLOR_INDICES[@]} * ${#SCHEMES[@]}))"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Re-apply monitor configuration after resume
+After=suspend.target
+
+[Service]
+Type=oneshot
+User=yohani-arch
+Environment=PATH=/usr/local/bin:/usr/bin
+ExecStart=/home/yohani-arch/.config/hypr/scripts/resume-monitors.sh
+
+[Install]
+WantedBy=suspend.target
