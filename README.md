@@ -200,8 +200,8 @@ nano /etc/hosts
 # Contraseña de root
 passwd
 
-# Crear usuario
-useradd -m -G wheel,audio,video,input,storage,optical -s /bin/zsh yt
+# Crear usuario (con bash por ahora — zsh se instala y configura en el paso 19)
+useradd -m -G wheel,audio,video,input,storage,optical -s /bin/bash yt
 passwd yt
 
 # Habilitar sudo para el grupo wheel
