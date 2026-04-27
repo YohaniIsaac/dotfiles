@@ -172,17 +172,25 @@ echo "KEYMAP=la-latin1" > /etc/vconsole.conf
 
 ### 12. Configurar hostname
 
+Elige el nombre que quieras para tu máquina (sin espacios ni caracteres especiales):
+
 ```bash
-echo "archlinux" > /etc/hostname
+echo "tu-hostname" > /etc/hostname
 ```
 
-Editar `/etc/hosts`:
+Luego edita `/etc/hosts` usando **el mismo nombre** que elegiste:
+
+```bash
+nano /etc/hosts
+```
 
 ```
 127.0.0.1   localhost
 ::1         localhost
-127.0.1.1   archlinux.localdomain archlinux
+127.0.1.1   tu-hostname.localdomain tu-hostname
 ```
+
+> **¿Por qué?** `/etc/hosts` es el DNS local de tu máquina. Sin esa entrada, tu equipo no puede resolver su propio nombre: herramientas de red, algunas apps y `sudo` en ciertos entornos buscan el hostname en un servidor DNS externo y fallan. Esta línea le dice al sistema "si alguien pregunta por ese nombre, soy yo mismo". El nombre en `/etc/hosts` **debe coincidir exactamente** con el que escribiste en `/etc/hostname`.
 
 ---
 
