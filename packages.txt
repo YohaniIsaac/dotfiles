@@ -1,0 +1,144 @@
+# =============================================================
+# Package List - Arch Linux
+# Install with: yay -S --needed - < packages.txt
+# Comments (#) and blank lines are ignored by yay
+# =============================================================
+
+# --- Base System ---
+base
+base-devel
+linux
+linux-firmware
+linux-headers
+grub
+efibootmgr
+sudo
+nano
+vim
+git
+wget
+zip
+unzip
+tree
+less
+dmidecode
+reflector
+
+# --- Display Manager ---
+sddm
+
+# --- Wayland / Hyprland ---
+hyprland
+waybar
+rofi
+swaync
+wlogout
+wofi
+hypridle
+hyprlock
+polkit-gnome
+xdg-desktop-portal-hyprland
+
+# --- Wallpaper & Theming ---
+awww
+waypaper
+matugen-bin
+
+# --- Terminal & Shell ---
+kitty
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+starship
+fzf
+fastfetch
+btop
+htop
+tmux
+
+# --- Audio ---
+pipewire
+pipewire-pulse
+pamixer
+pavucontrol
+playerctl
+
+# --- Bluetooth ---
+blueman
+bluez-utils
+
+# --- Network ---
+networkmanager
+network-manager-applet
+nmap
+
+# --- Fonts ---
+noto-fonts
+noto-fonts-emoji
+otf-font-awesome
+ttf-fira-sans
+ttf-firacode-nerd
+ttf-jetbrains-mono-nerd
+
+# --- Applications ---
+brave-bin
+discord
+spotify-launcher
+libreoffice-still
+thunar
+ranger
+qalculate-gtk
+
+# --- Utilities ---
+grim
+slurp
+cliphist
+wl-clipboard
+imagemagick
+jq
+ripgrep
+eza
+git-delta
+brightnessctl
+stow
+
+# --- Editor ---
+neovim
+
+# --- Printing ---
+cups
+epson-inkjet-printer-escpr
+epson-inkjet-printer-escpr2
+foomatic-db
+foomatic-db-engine
+ghostscript
+libxslt
+
+# --- AUR Helper ---
+yay
+
+# =============================================================
+# Embedded / Electronics Development (optional)
+# =============================================================
+
+# arm-none-eabi-binutils
+# arm-none-eabi-gcc
+# arm-none-eabi-gdb
+# arm-none-eabi-newlib
+# openocd
+# dfu-util
+# picocom
+# minicom
+# cmake
+# ninja
+# clang
+# ccache
+# rust
+# nodejs
+# npm
+# python-pip
+# kicad
+# jlink
+# qmodbus-git
+# saleae-logic2
+# snapd

@@ -35,6 +35,9 @@ export PATH="$HOME/.local/bin:$PATH"
 export EDITOR=nvim
 export VISUAL=nvim
 
+# --- Claude Code ---
+export CLAUDE_CODE_NO_FLICKER=1
+
 # --- Aliases ---
 alias ls='ls --color=auto'
 alias ll='ls -lah --color=auto'
@@ -146,3 +149,5 @@ zenv() {
 # This section can be safely removed at any time if needed.
 [[ ! -r '/home/yt/.opam/opam-init/init.zsh' ]] || source '/home/yt/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
 # END opam configuration
+
+export ZEPHYR_SDK_INSTALL_DIR=~/zephyr-sdk-0.17.0

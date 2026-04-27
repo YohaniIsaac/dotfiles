@@ -3,13 +3,13 @@
  */
 
 * {
-    bg0:    rgba(10, 22, 17, 0.75);
-    bg1:    #17221c;
-    bg2:    #212c27;
-    bg3:    #00513a;
-    fg0:    #d8e6dd;
-    fg1:    #d8e6dd;
-    fg2:    #bccac1;
-    fg3:    #87948c;
-    border: #00e1a6;
+    bg0:    rgba(27, 16, 22, 0.75);
+    bg1:    #281c22;
+    bg2:    #33262d;
+    bg3:    #890065;
+    fg0:    #f3dde6;
+    fg1:    #f3dde6;
+    fg2:    #d6c1ca;
+    fg3:    #9f8c94;
+    border: #ffaeda;
 }

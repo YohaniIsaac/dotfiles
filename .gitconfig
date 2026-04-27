@@ -1,0 +1,17 @@
+[user]
+	email = yohani.tripai@innovex.cl
+	name = Yohani Tripai
+[core]
+	editor = nvim
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	side-by-side = true
+	line-numbers = true
+	syntax-theme = Dracula
+	pager = less -R
+	width = variable
+[pager]
+	diff = true
