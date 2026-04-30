@@ -13,7 +13,7 @@ configuration {
 @import "/home/yt/.config/rofi/colors.rasi"
 
 /* Import rounded-dark theme */
-@import "/home/yt/.local/share/rofi/themes/rounded-dark.rasi"
+@import "/home/yt/.config/rofi/themes/rounded-dark.rasi"
 
 window {
     border-color: @border;

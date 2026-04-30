@@ -1,0 +1,59 @@
+# --- Historia y runtime ---
+.bash_history
+.zsh_history
+.zcompdump*
+.wget-hsts
+.current_wallpaper
+.claude.json
+
+# --- Directorios grandes / binarios / privados ---
+.cache/
+.cmake/
+.dotfiles/
+.gnupg/
+.local/share/
+.local/state/
+.local/bin/claude
+.npm/
+.opencode/
+zephyr-sdk-0.16.8/
+git/
+Documents/
+Pictures/
+
+# --- SSH: solo config, nunca claves ---
+.ssh/id_*
+.ssh/known_hosts
+.ssh/known_hosts.old
+
+# --- Shell: usando zsh, no bash ---
+.bash_logout
+.bash_profile
+.bashrc
+
+# --- Config: apps con demasiados datos generados ---
+.config/BraveSoftware/
+.config/dconf/
+.config/go/
+.config/pulse/
+.config/systemd/
+.config/mimeapps.list
+
+# --- Claude: solo config, no datos de sesión ---
+.claude/backups/
+.claude/cache/
+.claude/downloads/
+.claude/file-history/
+.claude/history.jsonl
+.claude/mcp-needs-auth-cache.json
+.claude/paste-cache/
+.claude/plans/
+.claude/plugins/
+.claude/powerline/
+.claude/projects/
+.claude/session-env/
+.claude/sessions/
+.claude/shell-snapshots/
+.claude/telemetry/
+.claude/claude-powerline.json
+.claude/.credentials.json
