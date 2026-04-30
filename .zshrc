@@ -150,4 +150,4 @@ zenv() {
 [[ ! -r '/home/yt/.opam/opam-init/init.zsh' ]] || source '/home/yt/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
 # END opam configuration
 
-export ZEPHYR_SDK_INSTALL_DIR=~/zephyr-sdk-0.17.0
+export PATH=$PATH:/opt/ba2-toolchain/bin
