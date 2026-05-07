@@ -1,0 +1,9 @@
+[Unit]
+Description=Sync Google Calendar ICS files
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/scripts/calendar-sync.sh
+StandardOutput=journal
+StandardError=journal

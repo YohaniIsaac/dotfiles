@@ -1,0 +1,190 @@
+$bg:           #14121c;
+$surface:      #211e29;
+$surface-high: #2b2833;
+$primary:      #ccbeff;
+$primary-dim:  #4d00d2;
+$text:         #e6e0ef;
+$text-dim:     #cac4d2;
+$text-muted:   #938f9c;
+$border:       #484551;
+$radius:       16px;
+$radius-sm:    8px;
+$font:         "JetBrainsMono Nerd Font";
+
+window.CalendarWindow {
+  background: transparent;
+
+  > * { background: transparent; }
+
+  .popup-root {
+    background: $bg;
+    border: 1px solid $border;
+    border-radius: $radius;
+    min-width: 420px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  .popup-header {
+    padding: 22px 24px 20px;
+    background: $surface;
+    border-radius: $radius $radius 0 0;
+    min-height: 110px;
+  }
+
+  .header-left {
+    .header-day-num {
+      font-family: $font;
+      font-size: 64px;
+      font-weight: bold;
+      color: $primary;
+      line-height: 1;
+    }
+    .header-day-name {
+      font-family: $font;
+      font-size: 12px;
+      color: $text-muted;
+      margin-top: 2px;
+    }
+    .header-time {
+      font-family: $font;
+      font-size: 20px;
+      font-weight: bold;
+      color: $text;
+      margin-top: 6px;
+    }
+  }
+
+  .header-right {
+    .weather-top {
+      font-family: $font;
+      font-size: 22px;
+      font-weight: bold;
+      color: $text;
+    }
+    .weather-desc {
+      font-family: $font;
+      font-size: 11px;
+      color: $text-muted;
+      margin-top: 4px;
+    }
+  }
+
+  // ── Separator ─────────────────────────────────────────────────────────────
+
+  .popup-sep {
+    background: $border;
+    min-height: 1px;
+  }
+
+  // ── Calendar ──────────────────────────────────────────────────────────────
+
+  .cal-section {
+    padding: 14px 18px 10px;
+    background: $bg;
+  }
+
+  .cal-nav {
+    margin-bottom: 6px;
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: $text-muted;
+      font-size: 18px;
+      border-radius: $radius-sm;
+      padding: 0 8px;
+      min-width: 30px;
+      &:hover { background: $surface-high; color: $primary; }
+    }
+
+    .month-label {
+      font-family: $font;
+      font-size: 13px;
+      font-weight: bold;
+      color: $primary;
+    }
+  }
+
+  .wd-header {
+    font-family: $font;
+    font-size: 10px;
+    font-weight: 600;
+    color: $text-muted;
+    min-width: 36px;
+    padding: 0 0 6px;
+  }
+
+  // Day cell (now a button)
+  .cal-day {
+    background: transparent;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 2px;
+    min-width: 36px;
+    min-height: 32px;
+
+    label {
+      font-family: $font;
+      font-size: 13px;
+      color: $text-dim;
+    }
+
+    &:hover {
+      background: $surface-high;
+      label { color: $text; }
+    }
+
+    &.today {
+      background: rgba(77, 0, 210, 0.4);
+      border: 1px solid rgba(204, 190, 255, 0.4);
+      label:first-child {
+        font-size: 15px;
+        font-weight: bold;
+        color: $primary;
+      }
+    }
+
+    .event-dot {
+      font-size: 10px;
+      color: $primary;
+      margin-top: -3px;
+    }
+  }
+
+  // ── Events ────────────────────────────────────────────────────────────────
+
+  .events-wrapper {
+    padding: 12px 18px 18px;
+    background: $bg;
+    border-radius: 0 0 $radius $radius;
+  }
+
+  .section-title {
+    font-family: $font;
+    font-size: 10px;
+    font-weight: bold;
+    color: $primary;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .events-scroll {
+    background: transparent;
+    scrollbar slider {
+      background: $border;
+      border-radius: 4px;
+      min-width: 3px;
+    }
+  }
+
+  .events-body {
+    font-family: $font;
+    font-size: 12px;
+    color: $text-dim;
+    line-height: 1.7;
+    background: transparent;
+  }
+}
