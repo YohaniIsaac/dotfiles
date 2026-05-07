@@ -14,6 +14,6 @@
       }
     }
   },
-  "theme": "dark",
-  "effortLevel": "low"
+  "effortLevel": "high",
+  "theme": "dark"
 }
