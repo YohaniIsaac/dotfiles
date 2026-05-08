@@ -108,6 +108,16 @@ eza
 git-delta
 brightnessctl
 stow
+curl
+libnotify
+pacman-contrib
+
+# --- Python ---
+python-pillow
+python-requests
+
+# --- Audio (session manager) ---
+wireplumber
 
 # --- Editor ---
 neovim
