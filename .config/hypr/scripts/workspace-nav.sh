@@ -11,14 +11,19 @@ NUM=$2
 
 ACTIVE_MONITOR=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name')
 
-if [ "$ACTIVE_MONITOR" = "HDMI-A-1" ]; then
+if [ "$ACTIVE_MONITOR" = "DP-1" ]; then
     OFFSET=0
     MIN=1
     MAX=10
-else
+elif [ "$ACTIVE_MONITOR" = "HDMI-A-1" ]; then
     OFFSET=10
     MIN=11
     MAX=20
+else
+    # eDP-1 (laptop) u otro monitor
+    OFFSET=20
+    MIN=21
+    MAX=30
 fi
 
 case "$ACTION" in
