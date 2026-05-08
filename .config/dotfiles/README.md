@@ -267,7 +267,7 @@ cd .. && rm -rf yay
 
 ### 18. Instalar todos los paquetes
 
-Clona el dotfiles primero para tener el `packages.txt`:
+Clona el dotfiles primero para tener el `packages.txt` (en `.config/dotfiles/`):
 
 ```bash
 git clone --bare git@github.com:YohaniIsaac/dotfiles.git $HOME/.dotfiles
@@ -284,7 +284,7 @@ dotfiles checkout
 Instala los paquetes:
 
 ```bash
-yay -S --needed - < ~/packages.txt
+yay -S --needed - < ~/.config/dotfiles/packages.txt
 ```
 
 ---
@@ -406,20 +406,24 @@ hyprctl monitors
 ```
 ~
 ├── .config/
+│   ├── ags/           # Widget de calendario (AGS/Astal GTK4)
+│   ├── dotfiles/      # Documentación y lista de paquetes
+│   │   ├── README.md
+│   │   └── packages.txt
 │   ├── hypr/          # Hyprland: ventanas, animaciones, keybindings, etc.
+│   ├── khal/          # Calendario local (lee ICS de Google Calendar)
 │   ├── waybar/        # Barra de estado
 │   ├── rofi/          # Launcher y temas
 │   ├── kitty/         # Terminal
 │   ├── nvim/          # Neovim (submódulo git)
 │   ├── ranger/        # File manager TUI
-│   ├── matugen/       # Templates para theming dinámico
+│   ├── matugen/       # Templates para theming dinámico (Material You)
 │   └── starship.toml  # Prompt de shell
 ├── .local/bin/
 │   └── hypr-generate-colors-wallpapers
 ├── .gitconfig
 ├── .ssh/config
-├── .zshrc
-└── packages.txt
+└── .zshrc
 ```
 
 ---
