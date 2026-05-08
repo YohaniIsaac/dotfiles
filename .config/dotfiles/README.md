@@ -426,4 +426,56 @@ El sistema usa [Matugen](https://github.com/InioX/matugen) para generar colores 
 2. Elige el color base (de 6 opciones extraídas de la imagen)
 3. Elige el esquema de color (Tonal Spot, Vibrant, Expressive, etc.)
 
-Los colores se aplican automáticamente a Hyprland, Waybar y Rofi mediante templates en `~/.config/matugen/templates/`.
+Los colores se aplican automáticamente a Hyprland, Waybar, Rofi y AGS mediante templates en `~/.config/matugen/templates/`.
+
+---
+
+## Archivos privados (no trackeados)
+
+Estos archivos contienen credenciales o URLs privadas y **no están en el repo**. Deben crearse manualmente tras el checkout.
+
+### `~/.config/khal/calendars.conf`
+
+Contiene las URLs secretas de los calendarios de Google Calendar (formato iCal). Crear con permisos restringidos:
+
+```bash
+touch ~/.config/khal/calendars.conf
+chmod 600 ~/.config/khal/calendars.conf
+```
+
+Formato del archivo:
+
+```
+# nombre|color|URL_ICS
+personal|light blue|https://calendar.google.com/calendar/ical/TU_USUARIO/private-XXXXX/basic.ics
+# trabajo|light green|https://calendar.google.com/calendar/ical/OTRO/private-XXXXX/basic.ics
+```
+
+Para obtener la URL de cada calendario: Google Calendar → Configuración → [nombre del calendario] → *Dirección secreta en formato iCal*.
+
+Una vez creado, sincroniza manualmente la primera vez:
+
+```bash
+~/.config/hypr/scripts/calendar-sync.sh
+```
+
+El timer de systemd se encarga de las sincronizaciones posteriores cada 15 minutos:
+
+```bash
+systemctl --user enable --now calendar-sync.timer
+```
+
+---
+
+## Servicios systemd de usuario
+
+Los siguientes servicios están trackeados en el repo y deben habilitarse tras el checkout:
+
+```bash
+systemctl --user enable --now calendar-sync.timer
+```
+
+| Servicio | Función |
+|---|---|
+| `calendar-sync.timer` | Sincroniza calendarios ICS cada 15 minutos |
+| `calendar-sync.service` | Ejecuta `calendar-sync.sh` (disparado por el timer) |
