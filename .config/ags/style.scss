@@ -1,15 +1,8 @@
-$bg:           #14121c;
-$surface:      #211e29;
-$surface-high: #2b2833;
-$primary:      #ccbeff;
-$primary-dim:  #4d00d2;
-$text:         #e6e0ef;
-$text-dim:     #cac4d2;
-$text-muted:   #938f9c;
-$border:       #484551;
-$radius:       16px;
-$radius-sm:    8px;
-$font:         "JetBrainsMono Nerd Font";
+@use './colors' as *;
+
+$radius:    16px;
+$radius-sm: 8px;
+$font:      "JetBrainsMono Nerd Font";
 
 window.CalendarWindow {
   background: transparent;
@@ -20,7 +13,7 @@ window.CalendarWindow {
     background: $bg;
     border: 1px solid $border;
     border-radius: $radius;
-    min-width: 420px;
+    min-width: 400px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.7);
   }
 
@@ -36,23 +29,25 @@ window.CalendarWindow {
   .header-left {
     .header-day-num {
       font-family: $font;
-      font-size: 64px;
+      font-size: 52px;
       font-weight: bold;
       color: $primary;
       line-height: 1;
     }
+    .header-namerow {
+      margin-top: 2px;
+    }
     .header-day-name {
       font-family: $font;
-      font-size: 12px;
+      font-size: 17px;
+      font-weight: 600;
       color: $text-muted;
-      margin-top: 2px;
     }
     .header-time {
       font-family: $font;
-      font-size: 20px;
+      font-size: 17px;
       font-weight: bold;
       color: $text;
-      margin-top: 6px;
     }
   }
 
@@ -75,7 +70,7 @@ window.CalendarWindow {
 
   .popup-sep {
     background: $border;
-    min-height: 1px;
+    min-height: 10px;
   }
 
   // ── Calendar ──────────────────────────────────────────────────────────────
@@ -137,8 +132,8 @@ window.CalendarWindow {
     }
 
     &.today {
-      background: rgba(77, 0, 210, 0.4);
-      border: 1px solid rgba(204, 190, 255, 0.4);
+      background: rgba($primary-dim, 0.4);
+      border: 1px solid rgba($primary, 0.4);
       label:first-child {
         font-size: 15px;
         font-weight: bold;
@@ -156,9 +151,10 @@ window.CalendarWindow {
   // ── Events ────────────────────────────────────────────────────────────────
 
   .events-wrapper {
-    padding: 12px 18px 18px;
+    padding: 12px 18px 58px;
     background: $bg;
     border-radius: 0 0 $radius $radius;
+    min-width: 0;
   }
 
   .section-title {
@@ -175,8 +171,8 @@ window.CalendarWindow {
     background: transparent;
     scrollbar slider {
       background: $border;
-      border-radius: 4px;
-      min-width: 3px;
+      border-radius: 1px;
+      min-width: 1px;
     }
   }
 

@@ -6,10 +6,10 @@ import GLib from "gi://GLib"
 
 // ── Locale ────────────────────────────────────────────────────────────────
 
-const WEEKDAYS  = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"]
-const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
-const DAYS_ES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
+const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+const MONTHS   = ["January","February","March","April","May","June",
+  "July","August","September","October","November","December"]
+const DAYS     = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
 const HOME    = `${GLib.get_home_dir()}`
 
 function pad(n: number) { return String(n).padStart(2, "0") }
@@ -35,7 +35,7 @@ function fetchEventsForDate(year: number, month: number, day: number): Promise<s
   const next  = new Date(year, month, day + 1)
   const end   = fmtLocale(next.getFullYear(), next.getMonth(), next.getDate())
   return execAsync(["bash", "-c",
-    `khal list ${start} ${end} 2>/dev/null | sed 's/ :: .*//' | grep -v '^$'`])
+    `khal list --format '{start-time} {title}' ${start} ${end} 2>/dev/null | grep -v '^$'`])
     .then(out => out.trim() || "Sin eventos este día")
     .catch(() => "Sin eventos este día")
 }
@@ -101,7 +101,7 @@ function makeCalendar(onDayClick: (y: number, m: number, d: number) => void) {
       col++; if (col > 6) { col = 0; row++ }
     }
 
-    monthLabel.set_label(`${MONTHS_ES[viewMonth]} ${viewYear}`)
+    monthLabel.set_label(`${MONTHS[viewMonth]} ${viewYear}`)
   }
 
   function refresh() {
@@ -140,7 +140,7 @@ function makeCalendar(onDayClick: (y: number, m: number, d: number) => void) {
 
 function Header() {
   const dayNum  = createPoll("--",    60000, async () => pad(new Date().getDate()))
-  const dayName = createPoll("---",   60000, async () => DAYS_ES[new Date().getDay()])
+  const dayName = createPoll("---",   60000, async () => DAYS[new Date().getDay()])
   const clock   = createPoll("--:--", 1000,  async () => {
     const d = new Date()
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`
@@ -166,12 +166,14 @@ function Header() {
 
   return (
     <box class="popup-header" halign={Gtk.Align.FILL}>
-      {/* Left: big day number + day name + clock */}
+      {/* Left: big day number + (day name · clock) on same row */}
       <box class="header-left" orientation={Gtk.Orientation.VERTICAL}
-        spacing={2} valign={Gtk.Align.CENTER}>
-        <label class="header-day-num"  label={dayNum}  halign={Gtk.Align.START} />
-        <label class="header-day-name" label={dayName} halign={Gtk.Align.START} />
-        <label class="header-time"     label={clock}   halign={Gtk.Align.START} />
+        spacing={4} valign={Gtk.Align.CENTER}>
+        <label class="header-day-num" label={dayNum} halign={Gtk.Align.START} />
+        <box class="header-namerow" spacing={8} halign={Gtk.Align.START} valign={Gtk.Align.CENTER}>
+          <label class="header-day-name" label={dayName} halign={Gtk.Align.START} />
+          <label class="header-time"     label={clock}   halign={Gtk.Align.CENTER} />
+        </box>
       </box>
 
       <box hexpand={true} />
@@ -205,13 +207,13 @@ function makeEvents() {
     const today = new Date()
     titleLabel.set_label("Próximos 7 días")
     execAsync(["bash", "-c",
-      "khal list today 8days 2>/dev/null | sed 's/ :: .*//' | grep -v '^$'"])
+      "khal list --format '{start-date} {start-time} {title}' today 8days 2>/dev/null | grep -v '^$'"])
       .then(out => label.set_label(out.trim() || "Sin eventos próximos"))
       .catch(() => label.set_label("Sin eventos próximos"))
   }
 
   function loadDay(year: number, month: number, day: number) {
-    titleLabel.set_label(`${day} de ${MONTHS_ES[month]}`)
+    titleLabel.set_label(`${day} ${MONTHS[month]}`)
     fetchEventsForDate(year, month, day)
       .then(out => label.set_label(out))
   }
@@ -220,11 +222,13 @@ function makeEvents() {
 
   const scroll = new Gtk.ScrolledWindow()
   scroll.set_css_classes(["events-scroll"])
-  scroll.set_max_content_height(160)
+  scroll.set_max_content_height(300)
+  scroll.set_hexpand(true)
   scroll.set_child(label)
 
   const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6 })
   box.set_css_classes(["events-section"])
+  box.set_hexpand(true)
   box.append(titleLabel)
   box.append(scroll)
 

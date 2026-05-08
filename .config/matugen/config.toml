@@ -18,3 +18,8 @@ post_hook = "hyprctl reload"
 [templates.rofi-colors]
 input_path = "~/.config/matugen/templates/rofi-colors.rasi"
 output_path = "~/.config/rofi/colors.rasi"
+
+[templates.ags-colors]
+input_path = "~/.config/matugen/templates/ags-colors.scss"
+output_path = "~/.config/ags/colors.scss"
+post_hook = "ags quit; sleep 0.5 && ags run ~/.config/ags &"
