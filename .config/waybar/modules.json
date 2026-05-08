@@ -358,7 +358,7 @@
     "format-icons": {
         "headphone": "",
         "headset": "",
-        "default": "󰕾"
+        "default": ""
     },
     "ignored-sinks": ["Easy Effects Sink"],
     "scroll-step": 5.0,
