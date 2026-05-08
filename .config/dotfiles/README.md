@@ -335,17 +335,7 @@ sudo systemctl enable --now bluetooth
 
 ---
 
-### 23. Configurar SDDM
-
-```bash
-sudo systemctl enable sddm
-```
-
-Para cambiar el tema, edita `/etc/sddm.conf` o usa `sddm-kcm` si lo tienes instalado.
-
----
-
-### 24. Generar caché de wallpapers (Matugen)
+### 23. Generar caché de wallpapers (Matugen)
 
 Agrega tus wallpapers a `~/Pictures/wallpapers/` y luego:
 
@@ -357,7 +347,7 @@ Esto pre-genera todas las combinaciones de color para el selector de wallpapers 
 
 ---
 
-### 25. Configurar monitores
+### 24. Configurar monitores
 
 Edita `~/.config/hypr/monitors.conf` según tu setup:
 

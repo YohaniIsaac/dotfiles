@@ -39,6 +39,13 @@ hyprlock
 polkit-gnome
 xdg-desktop-portal-hyprland
 
+# --- AGS / Widget Layer ---
+aylurs-gtk-shell
+dart-sass
+
+# --- Calendar ---
+khal
+
 # --- Wallpaper & Theming ---
 awww
 waypaper
