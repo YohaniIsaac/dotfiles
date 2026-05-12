@@ -1,7 +1,6 @@
 # =============================================================
 # Package List - Arch Linux
-# Install with: yay -S --needed - < packages.txt
-# Comments (#) and blank lines are ignored by yay
+# Install with: bash ~/.config/dotfiles/install.sh
 # =============================================================
 
 # --- Base System ---
@@ -121,6 +120,10 @@ wireplumber
 
 # --- Editor ---
 neovim
+python-pynvim
+zathura
+zathura-pdf-mupdf
+neovim-remote
 
 # --- Printing ---
 cups
