@@ -284,8 +284,10 @@ dotfiles checkout
 Instala los paquetes:
 
 ```bash
-yay -S --needed - < ~/.config/dotfiles/packages.txt
+bash ~/.config/dotfiles/install.sh
 ```
+
+Esto instala primero las fuentes (evita el prompt de proveedor `ttf-font`) y luego el resto de paquetes definidos en `packages.txt`, ignorando comentarios y líneas vacías.
 
 ---
 
@@ -397,9 +399,10 @@ hyprctl monitors
 ~
 ├── .config/
 │   ├── ags/           # Widget de calendario (AGS/Astal GTK4)
-│   ├── dotfiles/      # Documentación y lista de paquetes
+│   ├── dotfiles/      # Documentación, lista de paquetes y script de instalación
 │   │   ├── README.md
-│   │   └── packages.txt
+│   │   ├── packages.txt   # Todos los paquetes del sistema (pacman + AUR)
+│   │   └── install.sh     # Script de instalación (ejecutar tras clonar)
 │   ├── hypr/          # Hyprland: ventanas, animaciones, keybindings, etc.
 │   ├── khal/          # Calendario local (lee ICS de Google Calendar)
 │   ├── waybar/        # Barra de estado
