@@ -24,15 +24,8 @@ $border-intensity: 0.35;
 // Glow / halo — resplandor de color difuminado alrededor de la píldora ($primary de Matugen).
 // $glow-intensity = opacidad (0 = apagado, subilo para más presencia).
 // $glow-size = qué tan lejos/difuso llega el halo, en px.
-$glow-intensity: 0.9;
-$glow-size:      8px;
-
-// Anillos box-shadow — 2 aros concéntricos de color sólido (SIN blur) pegados por fuera del
-// borde, que simulan un degradado "por pasos": aro interno = $primary, externo = $primary-dim.
-// Lo más cercano a un borde en degradado que funciona con fondo transparente y esquinas redondas.
-// $ring-intensity = opacidad de ambos aros (0 = apagados). $ring-width = grosor de cada aro (px).
-$ring-intensity: 0.6;
-$ring-width:     2px;
+$glow-intensity: 1;
+$glow-size:      4px;
 
 // ── Mixins compartidos ─────────────────────────────────────────────────────────
 
@@ -71,15 +64,8 @@ $ring-width:     2px;
   @include pill-fill;                                    // fondo transparente ($fill-intensity)
   border: 2px solid rgba($primary, $border-intensity);  // borde sólido, independiente ($border-intensity)
   border-radius: $radius;
-  // Capas del box-shadow (la 1ª se dibuja ARRIBA):
-  //   1) aro interno $primary (spread = $ring-width)
-  //   2) aro externo $primary-dim (spread = doble → asoma por fuera del interno = efecto 2 pasos)
-  //   3) glow de color difuminado ($glow-*)
-  //   4) sombra de profundidad
-  //   5) brillo interno superior
-  box-shadow: 0 0 0 $ring-width rgba($primary, $ring-intensity),
-              0 0 0 ($ring-width * 2) rgba($primary-dim, $ring-intensity),
-              0 0 $glow-size rgba($primary, $glow-intensity),
+  // 1ª capa = glow de color ($glow-*) · 2ª = sombra de profundidad · 3ª = brillo interno superior
+  box-shadow: 0 0 $glow-size rgba($primary, $glow-intensity),
               0 4px 16px rgba(0,0,0,0.5),
               inset 0 1px 0 rgba(255,255,255,0.06);
   padding: 3px 12px;   // vertical · horizontal — controla alto y ancho de la píldora
