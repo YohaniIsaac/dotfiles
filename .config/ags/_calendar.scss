@@ -1,0 +1,192 @@
+// ── Popup de calendario ────────────────────────────────────────────────────────
+// Se abre con app.toggle_window("calendar"). Esc lo cierra.
+// El popup se ancla donde esté posicionado el cursor/ventana que lo abre.
+
+@use './shared' as *;
+
+window.CalendarWindow {
+  background: transparent;
+
+  > * { background: transparent; }
+
+  .popup-root {
+    background: $bg;
+    border: 1px solid $border;
+    border-radius: $radius;
+    min-width: 400px;           // ancho mínimo del popup
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  .popup-header {
+    padding: 22px 24px 20px;
+    background: $surface;
+    border-radius: $radius $radius 0 0;
+    min-height: 110px;          // altura del bloque superior (número día + clima)
+  }
+
+  .header-left {
+    .header-day-num {
+      font-family: $font;
+      font-size: 52px;          // número del día — sube/baja para más/menos énfasis
+      font-weight: bold;
+      color: $primary;
+      line-height: 1;
+    }
+    .header-namerow {
+      margin-top: 2px;
+    }
+    .header-day-name {
+      font-family: $font;
+      font-size: 17px;
+      font-weight: 600;
+      color: $text-muted;
+    }
+    .header-time {
+      font-family: $font;
+      font-size: 17px;
+      font-weight: bold;
+      color: $text;
+    }
+  }
+
+  .header-right {
+    // Clima obtenido de wttr.in/Valdivia — se actualiza cada 30 min
+    .weather-top {
+      font-family: $font;
+      font-size: 22px;
+      font-weight: bold;
+      color: $text;
+    }
+    .weather-desc {
+      font-family: $font;
+      font-size: 11px;
+      color: $text-muted;
+      margin-top: 4px;
+    }
+  }
+
+  // ── Separador ─────────────────────────────────────────────────────────────
+
+  .popup-sep {
+    background: $border;
+    min-height: 10px;           // grosor de la línea separadora
+  }
+
+  // ── Cuadrícula del calendario ──────────────────────────────────────────────
+
+  .cal-section {
+    padding: 14px 18px 10px;
+    background: $bg;
+  }
+
+  .cal-nav {
+    margin-bottom: 6px;
+
+    .nav-btn {
+      // Botones ‹ › para navegar entre meses
+      background: transparent;
+      border: none;
+      color: $text-muted;
+      font-size: 18px;
+      border-radius: $radius-sm;
+      padding: 0 8px;
+      min-width: 30px;
+      &:hover { background: $surface-high; color: $primary; }
+    }
+
+    .month-label {
+      font-family: $font;
+      font-size: 13px;
+      font-weight: bold;
+      color: $primary;
+    }
+  }
+
+  .wd-header {
+    // Cabecera de días de la semana (Mo, Tu, We...)
+    font-family: $font;
+    font-size: 10px;
+    font-weight: 600;
+    color: $text-muted;
+    min-width: 36px;            // debe coincidir con min-width de .cal-day
+    padding: 0 0 6px;
+  }
+
+  .cal-day {
+    // Celda de cada día del calendario
+    background: transparent;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 2px;
+    min-width: 36px;            // ancho de cada celda
+    min-height: 32px;           // alto de cada celda
+
+    label {
+      font-family: $font;
+      font-size: 13px;
+      color: $text-dim;
+    }
+
+    &:hover {
+      background: $surface-high;
+      label { color: $text; }
+    }
+
+    &.today {
+      // Día actual resaltado
+      background: rgba($primary-dim, 0.4);
+      border: 1px solid rgba($primary, 0.4);
+      label:first-child {
+        font-size: 15px;
+        font-weight: bold;
+        color: $primary;
+      }
+    }
+
+    .event-dot {
+      // Punto bajo el número cuando el día tiene eventos (leídos del ICS)
+      font-size: 10px;
+      color: $primary;
+      margin-top: -3px;
+    }
+  }
+
+  // ── Lista de eventos ───────────────────────────────────────────────────────
+
+  .events-wrapper {
+    padding: 12px 18px 58px;    // padding-bottom generoso para espacio visual
+    background: $bg;
+    border-radius: 0 0 $radius $radius;
+    min-width: 0;
+  }
+
+  .section-title {
+    // "PRÓXIMOS 7 DÍAS" / "30 JUNIO" etc.
+    font-family: $font;
+    font-size: 10px;
+    font-weight: bold;
+    color: $primary;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .events-scroll {
+    background: transparent;
+    scrollbar slider {
+      background: $border;
+      border-radius: 1px;
+      min-width: 1px;
+    }
+  }
+
+  .events-body {
+    font-family: $font;
+    font-size: 12px;
+    color: $text-dim;
+    line-height: 1.7;
+    background: transparent;
+  }
+}

@@ -1,0 +1,70 @@
+// ── Colores ────────────────────────────────────────────────────────────────────
+// Generados por Matugen — no editar manualmente.
+// @forward los reexporta para que cualquier archivo que haga @use '_shared' as *
+// tenga acceso a $primary, $bg, $surface, etc.
+
+@use './colors' as *;
+@forward './colors';
+
+// ── Variables globales ─────────────────────────────────────────────────────────
+// Modificar aquí afecta a todos los widgets que las usen.
+
+$radius:    12px;   // redondez de esquinas de píldoras
+$radius-sm: 8px;    // redondez de botones internos (workspaces, navegación)
+$font:      "JetBrainsMono Nerd Font";
+
+// Intensidad del RELLENO de las píldoras ($surface de Matugen). 0 = invisible/transparente,
+// 1 = totalmente sólido.
+$fill-intensity: 0.45;
+
+// Intensidad del BORDE — degradado $primary/$primary-dim de Matugen. Independiente del relleno,
+// pero como el relleno es semi-transparente y va ENCIMA del borde, algo de este color siempre
+// se va a filtrar visualmente al interior — no es un bug, es la naturaleza de la técnica (ver
+// nota en bar-pill más abajo).
+$border-intensity: 0.35;
+
+// ── Mixins compartidos ─────────────────────────────────────────────────────────
+
+// Hace la ventana GTK transparente — el fondo visible lo da la píldora interna.
+// "> *" solo llega al primer nivel (el centerbox); la estructura real de BottomBar es
+// window → centerbox → box[start/center/end] → box.pill-inner (3 niveles) — por eso el
+// descendant selector "box"/"centerbox" sin ">" para cubrir TODOS los niveles intermedios.
+// Las píldoras (.clock-inner, .ws-inner, etc.) igual pintan su propio fondo encima — una
+// clase siempre gana en especificidad a este selector genérico, así que no hay conflicto.
+@mixin bar-window {
+  background: transparent;
+  box, centerbox { background: transparent; }
+}
+
+// Relleno de la píldora — plano y simple. $opacity parametrizable (el popup usa una más alta,
+// o sea menos transparente, que las píldoras de la barra).
+@mixin pill-fill($opacity: $fill-intensity) {
+  background: rgba($surface, $opacity);
+}
+
+// Degradado real en el borde — técnica de DOS boxes anidados, no de background-clip (esa la
+// probamos y no renderiza en este GTK4 pese a parsear bien). Este "aro" exterior pinta el
+// degradado como su propio fondo; el padding acá ES el grosor visible del borde. Adentro va
+// un box con @include pill-fill (el contenido real) que tapa todo menos ese margen — el
+// degradado que se ve es literalmente el fondo del aro asomando por los bordes. 100% confiable
+// porque son solo dos fondos apilados, sin depender de ningún soporte especial de recorte.
+@mixin pill-ring($width: 2px) {
+  background: linear-gradient(135deg, rgba($primary, $border-intensity), rgba($primary-dim, $border-intensity));
+  border-radius: $radius;
+  padding: $width;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+// Forma visual del contenido interno de cada píldora (reloj, workspaces, sistema) — va DENTRO
+// de un .pill-ring (ver arriba). No lleva box-shadow propio (ya lo pone el aro exterior).
+//
+// Opción 2 (probando): prioriza transparencia real por sobre que el degradado del aro no se
+// filtre — a este nivel de opacidad se va a notar algo de tinte/degradado en el interior.
+// Si no convence, opción 3 es volver a borde sólido sin degradado (sin este conflicto).
+@mixin bar-pill {
+  @include pill-fill;
+  border-radius: calc(#{$radius} - 2px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  padding: 3px 12px;   // vertical · horizontal — controla alto y ancho de la píldora
+  min-height: 26px;    // altura mínima — sube para una barra más alta
+}

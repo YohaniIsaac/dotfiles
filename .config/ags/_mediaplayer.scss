@@ -1,0 +1,128 @@
+// ── Popup del reproductor (Spotify) ─────────────────────────────────────────────
+// Se abre con clic en la carátula de la píldora central de la barra. Esc lo cierra.
+// app.toggle_window("media-popup") — ver widget/MediaPlayer.tsx
+
+@use './shared' as *;
+
+// Estilo compartido por los nodos internos de cualquier <slider> (Astal.Slider = Gtk.Scale).
+// Parametrizado para poder hacer el seek más angosto y discreto que el de volumen.
+@mixin slider-track($track-height: 4px, $handle-size: 10px, $handle-color: $text) {
+  trough {
+    background: $surface-high;
+    border-radius: 999px;
+    min-height: $track-height;
+  }
+
+  highlight {
+    background: $primary;
+    border-radius: 999px;
+  }
+
+  slider {
+    background: $handle-color;
+    border-radius: 999px;
+    min-width: $handle-size;
+    min-height: $handle-size;
+    margin: 0;            // el tema base trae un margin negativo para desbordar el trough — lo resetea
+  }
+}
+
+window.MediaPlayer {
+  background: transparent;
+
+  > * { background: transparent; }
+
+  // Aro exterior con degradado real (mismo mecanismo que .pill-ring en _bar.scss).
+  .popup-ring {
+    @include pill-ring(1px);   // 1px — el popup tenía borde más fino que las píldoras (2px)
+    min-width: 380px;          // ancho del popup — carátula a la izquierda, todo lo demás a la derecha
+  }
+
+  .popup-root {
+    // 0.85 — bastante menos transparente que las píldoras (0.35 por defecto), a pedido.
+    @include pill-fill(0.85);
+    border-radius: calc(#{$radius} - 1px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    padding: 16px;
+  }
+
+  .media-popup-cover {
+    // vexpand en el TSX hace que ocupe todo el alto del popup (mismo alto que .media-popup-info)
+    background-size: cover;
+    background-position: center;
+    background-color: $surface;
+    min-width: 140px;           // ancho de la carátula — el alto lo define el contenido de al lado
+    border: none;
+    border-radius: $radius;     // esquinas redondeadas — cambia a 999px para círculo
+    padding: 0;
+  }
+
+  .media-popup-cover-fallback {
+    font-family: $font;
+    font-size: 40px;            // ícono de Spotify, centrado, si no hay carátula todavía
+    color: $primary;
+  }
+
+  .media-popup-title {
+    font-family: $font;
+    font-size: 15px;
+    font-weight: bold;
+    color: $text;
+  }
+
+  .media-popup-artist {
+    font-family: $font;
+    font-size: 12px;
+    color: $text-muted;
+  }
+
+  .media-popup-btn {
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: 6px;
+    color: $text-muted;
+    font-size: 18px;
+    transition: all 150ms ease;
+
+    &:hover {
+      background: $surface-high;
+      color: $primary;
+    }
+
+    &.active {
+      // Shuffle activado
+      color: $primary;
+      background: rgba($primary-dim, 0.3);
+    }
+  }
+
+  .media-popup-btn-play {
+    color: $primary;
+    font-size: 22px;            // play/pause un poco más grande que prev/next/shuffle
+  }
+
+  // ── Volumen propio de Spotify (arriba) ───────────────────────────────────────
+
+  .media-popup-vol-icon {
+    font-family: $font;
+    font-size: 13px;
+    color: $primary;
+  }
+
+  .media-popup-volume {
+    @include slider-track(3px, 8px, $text);
+  }
+
+  // ── Barra de progreso / seek (abajo, más angosta y discreta que el volumen) ─
+
+  .media-popup-seek {
+    @include slider-track(2px, 7px, $text-muted);
+  }
+
+  .media-popup-time {
+    font-family: $font;
+    font-size: 10px;
+    color: $text-muted;
+  }
+}
