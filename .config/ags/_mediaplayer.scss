@@ -32,18 +32,10 @@ window.MediaPlayer {
 
   > * { background: transparent; }
 
-  // Aro exterior con degradado real (mixin pill-ring en _shared.scss). Solo el popup usa esta
-  // técnica ahora — las píldoras de la barra pasaron a borde sólido.
-  .popup-ring {
-    @include pill-ring(1px);   // 1px — el popup tenía borde más fino que las píldoras (2px)
-    min-width: 380px;          // ancho del popup — carátula a la izquierda, todo lo demás a la derecha
-  }
-
+  // Mismo look que las píldoras de la barra (borde sólido + glow + fondo transparente).
   .popup-root {
-    // 0.85 — bastante menos transparente que las píldoras (0.35 por defecto), a pedido.
-    @include pill-fill(0.85);
-    border-radius: calc(#{$radius} - 1px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    @include pill-look;
+    min-width: 380px;   // ancho del popup — carátula a la izquierda, todo lo demás a la derecha
     padding: 16px;
   }
 

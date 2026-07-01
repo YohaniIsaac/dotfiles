@@ -84,7 +84,6 @@ export default function MediaPlayer() {
         self.add_controller(ctrl)
       }}
     >
-      <box class="popup-ring">
       <box class="popup-root" spacing={16}>
         <box class="media-popup-cover" vexpand
           css={mediaState.as(m => m.cover ? `background-image: url("file://${m.cover}");` : "")}
@@ -161,7 +160,6 @@ export default function MediaPlayer() {
               valign={Gtk.Align.CENTER} />
           </box>
         </box>
-      </box>
       </box>
     </window>
   )

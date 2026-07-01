@@ -46,21 +46,11 @@ $glow-size:      4px;
   background: rgba($surface, $opacity);
 }
 
-// Aro con degradado — técnica de dos boxes anidados. YA NO la usan las píldoras de la barra
-// (pasaron a borde sólido, ver bar-pill), pero SÍ la sigue usando el popup (.popup-ring en
-// _mediaplayer.scss), así que no la borro.
-@mixin pill-ring($width: 2px) {
-  background: linear-gradient(135deg, rgba($primary, $border-intensity), rgba($primary-dim, $border-intensity));
-  border-radius: $radius;
-  padding: $width;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-}
-
-// Forma visual de cada píldora de la barra (reloj, workspaces, sistema, spotify) — UNA sola caja.
-// Borde sólido (no degradado): así fondo y borde son 100% independientes — el borde se dibuja
-// solo en el filo (paso propio del render de GTK4), no detrás del contenido, por lo que no
-// se mezcla con el fondo transparente. Fondo y borde tienen cada uno su variable de intensidad.
-@mixin bar-pill {
+// Identidad visual compartida por la barra Y el popup — fondo transparente, borde sólido, glow,
+// sombra de profundidad y brillo interno. Un solo lugar para el "look"; el tamaño (padding,
+// min-*) lo pone cada quien aparte. Borde sólido = fondo y borde 100% independientes (el borde
+// se dibuja solo en el filo, paso propio del render de GTK4, sin mezclarse con el fondo).
+@mixin pill-look {
   @include pill-fill;                                    // fondo transparente ($fill-intensity)
   border: 2px solid rgba($primary, $border-intensity);  // borde sólido, independiente ($border-intensity)
   border-radius: $radius;
@@ -68,6 +58,11 @@ $glow-size:      4px;
   box-shadow: 0 0 $glow-size rgba($primary, $glow-intensity),
               0 4px 16px rgba(0,0,0,0.5),
               inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+// Píldora de la barra (reloj, workspaces, sistema, spotify) = look compartido + tamaño de barra.
+@mixin bar-pill {
+  @include pill-look;
   padding: 3px 12px;   // vertical · horizontal — controla alto y ancho de la píldora
   min-height: 26px;    // altura mínima — sube para una barra más alta
 }
