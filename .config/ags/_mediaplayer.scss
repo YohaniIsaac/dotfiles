@@ -4,6 +4,10 @@
 
 @use './shared' as *;
 
+// Opacidad del fondo del popup cuando el mouse está ENCIMA — más sólido para leer mejor.
+// En reposo usa $fill-intensity (transparente, igual que la barra). 1 = totalmente opaco.
+$popup-hover-fill: 0.92;
+
 // Estilo compartido por los nodos internos de cualquier <slider> (Astal.Slider = Gtk.Scale).
 // Parametrizado para poder hacer el seek más angosto y discreto que el de volumen.
 @mixin slider-track($track-height: 4px, $handle-size: 10px, $handle-color: $text) {
@@ -33,10 +37,16 @@ window.MediaPlayer {
   > * { background: transparent; }
 
   // Mismo look que las píldoras de la barra (borde sólido + glow + fondo transparente).
+  // Transparencia dinámica: transparente en reposo, más sólido al pasar el mouse (para leer).
   .popup-root {
     @include pill-look;
     min-width: 380px;   // ancho del popup — carátula a la izquierda, todo lo demás a la derecha
     padding: 16px;
+    transition: background 200ms ease;
+
+    &:hover {
+      background: rgba($surface, $popup-hover-fill);
+    }
   }
 
   .media-popup-cover {
