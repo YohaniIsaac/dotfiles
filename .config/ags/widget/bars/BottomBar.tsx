@@ -25,8 +25,8 @@ const bat     = Battery.get_default()   // null en equipos sin batería
 
 // ── Clock ─────────────────────────────────────────────────────────────────────
 
-const DAYS   = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
-const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
+const DAYS   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 const pad    = (n: number) => String(n).padStart(2, "0")
 
 function ClockPill() {
@@ -36,12 +36,29 @@ function ClockPill() {
   })
   const date = createPoll("", 60000, async () => {
     const d = new Date()
-    return `${DAYS[d.getDay()]}  ${d.getDate()} ${MONTHS[d.getMonth()]}`
+    return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`
   })
+
+  // Contraído: solo la hora. Al pasar el mouse, el Revealer despliega la fecha (día en inglés).
+  let revealer: Gtk.Revealer | null = null
+
   return (
-    <box class="clock-inner" spacing={10} valign={Gtk.Align.CENTER}>
+    <box class="clock-inner" spacing={0} valign={Gtk.Align.CENTER}
+      $={(self) => {
+        const motion = new Gtk.EventControllerMotion()
+        motion.connect("enter", () => revealer?.set_reveal_child(true))
+        motion.connect("leave", () => revealer?.set_reveal_child(false))
+        self.add_controller(motion)
+      }}
+    >
       <label class="clock-time" label={clock} />
-      <label class="clock-date" label={date} />
+      <revealer revealChild={false}
+        transitionType={Gtk.RevealerTransitionType.SLIDE_RIGHT}
+        transitionDuration={200}
+        $={(self) => { revealer = self }}
+      >
+        <label class="clock-date" label={date} />
+      </revealer>
     </box>
   )
 }
@@ -472,11 +489,11 @@ export default function BottomBar(gdkmonitor: Gdk.Monitor) {
     >
       <centerbox>
         <box $type="start" halign={Gtk.Align.START} marginStart={8}>
-          <ClockPill />
+          <WorkspacesPill connector={connector} />
         </box>
         <box $type="center" halign={Gtk.Align.CENTER} spacing={8}>
+          <ClockPill />
           <MediaPill />
-          <WorkspacesPill connector={connector} />
         </box>
         <box $type="end" halign={Gtk.Align.END} marginEnd={8}>
           <SystemPill />

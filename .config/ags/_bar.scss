@@ -8,7 +8,7 @@
 window.BottomBar {
   @include bar-window;
 
-  // ── Reloj (sección izquierda) ──────────────────────────────────────────────
+  // ── Reloj (sección central, contraído — hover despliega la fecha) ──────────
 
   .clock-inner {
     @include bar-pill;
@@ -23,11 +23,12 @@ window.BottomBar {
 
   .clock-date {
     font-family: $font;
-    font-size: 12px;            // tamaño de la fecha (Lunes 30 Jun)
+    font-size: 12px;            // tamaño de la fecha (Monday 7 Jul)
     color: $text-muted;
+    margin-left: 8px;           // separación hora↔fecha — va acá (no en el box) para no dejar hueco al contraerse
   }
 
-  // ── Workspaces (sección central) ───────────────────────────────────────────
+  // ── Workspaces (sección izquierda) ─────────────────────────────────────────
 
   .ws-inner {
     @include bar-pill;
