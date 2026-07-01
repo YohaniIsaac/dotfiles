@@ -35,37 +35,38 @@ window.BottomBar {
     padding: 3px 8px;           // menos padding horizontal para una píldora más compacta
   }
 
+  // Estilo "dots": cada workspace es un punto en vez de un número.
+  // El botón es solo el área clickeable (transparente); el punto visible es .ws-dot adentro.
   .ws-btn {
     background: transparent;
-    border: 1px solid transparent; // invisible por defecto — se activa en .active y .occupied
-    border-radius: $radius-sm;
-    min-width: 1px;             // el número (label) determina el tamaño real si es mayor
+    border: none;
+    padding: 3px;               // área de clic alrededor del punto — sube para clic más fácil
+    min-width: 1px;
     min-height: 1px;
-    color: $text-muted;
-    font-family: $font;
-    font-size: 12px;            // tamaño del número del workspace
-    transition: all 150ms ease;
 
-    &:hover {
-      background: $surface-high;
-      color: $text;
+    &:hover .ws-dot {
+      background: $text;        // al pasar el mouse, el punto se aclara
     }
 
-    &.active {
-      // Workspace donde estás actualmente
-      background: rgba($primary-dim, 0.3);      // relleno — sube opacidad para más contraste
-      border: 1px solid rgba($primary, 0.55);   // borde
-      color: $primary;
-      font-weight: bold;
-      // Forma: $radius-sm = esquinas redondeadas · 999px = píldora · 0 = cuadrado
-    }
-
-    &.occupied {
+    &.occupied .ws-dot {
       // Workspace con ventanas abiertas pero donde NO estás
-      border: 1.5px solid rgba($primary, 0.45);
-      border-radius: 999px;                     // círculo — cambia a $radius-sm para igualar .active
-      color: $text-dim;
+      background: rgba($primary, 0.55);
     }
+
+    &.active .ws-dot {
+      // Workspace actual — pastilla alargada y brillante (look moderno tipo GNOME/macOS)
+      background: $primary;
+      min-width: 20px;          // alargado horizontal — bajá para acercarlo a un círculo
+    }
+  }
+
+  .ws-dot {
+    // El punto en sí. Vacío por defecto: chico y tenue.
+    min-width: 8px;             // diámetro del punto
+    min-height: 8px;
+    border-radius: 999px;       // círculo — bajá a $radius-sm para cuadraditos redondeados
+    background: rgba($text-muted, 0.4);
+    transition: all 150ms ease; // anima el cambio de tamaño/color entre estados
   }
 
   // ── Spotify (sección central, junto a workspaces) ──────────────────────────

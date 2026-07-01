@@ -121,7 +121,7 @@ function WorkspacesPill({ connector }: { connector: string }) {
           })}
           onClicked={() => execAsync(`hyprctl dispatch workspace ${id}`).catch(() => {})}
         >
-          <label label={String(((id - 1) % 10) + 1)} />
+          <box class="ws-dot" />
         </button>
       ))}
     </box>
