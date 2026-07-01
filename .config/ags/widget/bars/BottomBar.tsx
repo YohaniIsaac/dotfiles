@@ -121,7 +121,7 @@ function WorkspacesPill({ connector }: { connector: string }) {
           })}
           onClicked={() => execAsync(`hyprctl dispatch workspace ${id}`).catch(() => {})}
         >
-          <box class="ws-dot" />
+          <box class="ws-dot" halign={Gtk.Align.CENTER} valign={Gtk.Align.CENTER} />
         </button>
       ))}
     </box>

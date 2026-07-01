@@ -35,12 +35,12 @@ window.BottomBar {
     padding: 3px 8px;           // menos padding horizontal para una píldora más compacta
   }
 
-  // Estilo "dots": cada workspace es un punto en vez de un número.
+  // Estilo "dots": cada workspace es un punto pequeño en vez de un número.
   // El botón es solo el área clickeable (transparente); el punto visible es .ws-dot adentro.
   .ws-btn {
     background: transparent;
     border: none;
-    padding: 3px;               // área de clic alrededor del punto — sube para clic más fácil
+    padding: 2px;               // área de clic alrededor del punto — sube para clic más fácil
     min-width: 1px;
     min-height: 1px;
 
@@ -49,23 +49,29 @@ window.BottomBar {
     }
 
     &.occupied .ws-dot {
-      // Workspace con ventanas abiertas pero donde NO estás
-      background: rgba($primary, 0.55);
+      // Workspace con ventanas abiertas pero donde NO estás — SOLO borde (hueco, sin relleno)
+      background: transparent;
+      border: 1.5px solid rgba($primary, 0.6);
+      min-width: 4px;
+      min-height: 4px;
     }
 
     &.active .ws-dot {
-      // Workspace actual — pastilla alargada y brillante (look moderno tipo GNOME/macOS)
+      // Workspace actual — punto sólido y brillante, el más grande (pero sigue siendo redondo)
       background: $primary;
-      min-width: 20px;          // alargado horizontal — bajá para acercarlo a un círculo
+      min-width: 7px;
+      min-height: 7px;
     }
   }
 
   .ws-dot {
-    // El punto en sí. Vacío por defecto: chico y tenue.
-    min-width: 8px;             // diámetro del punto
-    min-height: 8px;
-    border-radius: 999px;       // círculo — bajá a $radius-sm para cuadraditos redondeados
+    // El punto en sí. halign/valign center (en el TSX) evita que se estire a óvalo.
+    // Vacío por defecto: bien chico y tenue.
+    min-width: 5px;             // diámetro del punto vacío — el más pequeño
+    min-height: 5px;
+    border-radius: 999px;       // círculo perfecto
     background: rgba($text-muted, 0.4);
+    margin-bottom: 2px;         // sube los puntos ~1px (con valign center, el hueco de abajo los empuja arriba)
     transition: all 150ms ease; // anima el cambio de tamaño/color entre estados
   }
 
