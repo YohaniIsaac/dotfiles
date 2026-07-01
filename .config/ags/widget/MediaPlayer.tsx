@@ -51,7 +51,7 @@ export default function MediaPlayer() {
       application={app}
       keymode={Astal.Keymode.ON_DEMAND}
       $={(self) => {
-        // anchor/marginBottom se fijan acá, no como prop del constructor: pasar anchor en las
+        // anchor/marginTop se fijan acá, no como prop del constructor: pasar anchor en las
         // props iniciales del <window> hacía que Gtk.Application nunca registrara la ventana
         // (app.toggle_window fallaba con "no window registered"). Verificado — Calendar, que no
         // tiene anchor, sí se registraba bien.
@@ -59,9 +59,10 @@ export default function MediaPlayer() {
         // Orden importa: margin ANTES que anchor (si no, el margen queda ignorado). Verificado
         // con hyprctl layers: Hyprland ya descuenta la zona exclusiva de la barra (exclusivity:
         // EXCLUSIVE) del área disponible, así que este valor ES directamente el gap visual entre
-        // el popup y la barra — no hay que sumarle el alto de la barra ni su propio marginBottom.
-        self.marginBottom = 5   // gap visual real entre el popup y la barra
-        self.anchor = Astal.WindowAnchor.BOTTOM
+        // el popup y la barra — no hay que sumarle el alto de la barra ni su propio margin.
+        // Barra arriba → popup anclado arriba también, para que aparezca justo debajo de ella.
+        self.marginTop = 5   // gap visual real entre el popup y la barra
+        self.anchor = Astal.WindowAnchor.TOP
 
         // Se cierra solo al perder el foco (clic afuera) — así no queda interrumpiendo en pantalla.
         // El guard wasActive evita cerrarlo apenas se abre (is-active empieza en false de forma

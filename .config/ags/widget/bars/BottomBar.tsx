@@ -473,7 +473,7 @@ function SystemPill() {
 // ── Barra unificada ───────────────────────────────────────────────────────────
 
 export default function BottomBar(gdkmonitor: Gdk.Monitor) {
-  const { BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor
+  const { TOP, LEFT, RIGHT } = Astal.WindowAnchor
   const connector = gdkmonitor.get_connector() ?? ""
 
   return (
@@ -483,9 +483,9 @@ export default function BottomBar(gdkmonitor: Gdk.Monitor) {
       class="BottomBar"
       gdkmonitor={gdkmonitor}
       exclusivity={Astal.Exclusivity.EXCLUSIVE}
-      anchor={BOTTOM | LEFT | RIGHT}
+      anchor={TOP | LEFT | RIGHT}
       application={app}
-      marginBottom={8}
+      marginTop={8}
     >
       <centerbox>
         <box $type="start" halign={Gtk.Align.START} marginStart={8}>

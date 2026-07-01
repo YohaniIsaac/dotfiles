@@ -1,7 +1,7 @@
-// ── BottomBar ──────────────────────────────────────────────────────────────────
-// Una sola ventana GTK con anchor BOTTOM+LEFT+RIGHT — contiene tres píldoras.
-// Para cambiar posición vertical: marginBottom en BottomBar.tsx.
-// Para mover la barra arriba: anchor={TOP | LEFT | RIGHT} en BottomBar.tsx.
+// ── Barra (clase CSS window.BottomBar — nombre histórico; ahora está anclada ARRIBA) ──
+// Una sola ventana GTK con anchor TOP+LEFT+RIGHT — contiene tres píldoras.
+// Para cambiar posición vertical: marginTop en BottomBar.tsx.
+// Para volver la barra abajo: anchor={BOTTOM | LEFT | RIGHT} + marginBottom en BottomBar.tsx.
 
 @use './shared' as *;
 
