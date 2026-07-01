@@ -39,11 +39,9 @@ function ClockPill() {
     return `${DAYS[d.getDay()]}  ${d.getDate()} ${MONTHS[d.getMonth()]}`
   })
   return (
-    <box class="pill-ring">
-      <box class="clock-inner" spacing={10} valign={Gtk.Align.CENTER}>
-        <label class="clock-time" label={clock} />
-        <label class="clock-date" label={date} />
-      </box>
+    <box class="clock-inner" spacing={10} valign={Gtk.Align.CENTER}>
+      <label class="clock-time" label={clock} />
+      <label class="clock-date" label={date} />
     </box>
   )
 }
@@ -86,7 +84,7 @@ function WorkspacesPill({ connector }: { connector: string }) {
   const wsRange = wsRangeFor(connector)
 
   return (
-    <box class="pill-ring"
+    <box class="ws-inner" spacing={4} valign={Gtk.Align.CENTER}
       $={(self) => {
         const scroll = new Gtk.EventControllerScroll()
         scroll.set_flags(Gtk.EventControllerScrollFlags.VERTICAL)
@@ -97,20 +95,18 @@ function WorkspacesPill({ connector }: { connector: string }) {
         self.add_controller(scroll)
       }}
     >
-      <box class="ws-inner" spacing={4} valign={Gtk.Align.CENTER}>
-        {wsRange.map(id => (
-          <button
-            class={wsState.as(s => {
-              if (s.active[connector] === id) return "ws-btn active"
-              if (s.occupied.has(id))         return "ws-btn occupied"
-              return "ws-btn"
-            })}
-            onClicked={() => execAsync(`hyprctl dispatch workspace ${id}`).catch(() => {})}
-          >
-            <label label={String(((id - 1) % 10) + 1)} />
-          </button>
-        ))}
-      </box>
+      {wsRange.map(id => (
+        <button
+          class={wsState.as(s => {
+            if (s.active[connector] === id) return "ws-btn active"
+            if (s.occupied.has(id))         return "ws-btn occupied"
+            return "ws-btn"
+          })}
+          onClicked={() => execAsync(`hyprctl dispatch workspace ${id}`).catch(() => {})}
+        >
+          <label label={String(((id - 1) % 10) + 1)} />
+        </button>
+      ))}
     </box>
   )
 }
@@ -249,7 +245,8 @@ function BatteryWidget() {
 
 function MediaPill() {
   return (
-    <box class={mediaState.as(m => m.playing ? "pill-ring" : "pill-ring paused")}
+    <box class={mediaState.as(m => m.playing ? "media-inner" : "media-inner paused")}
+      spacing={6} valign={Gtk.Align.CENTER}
       visible={mediaState.as(m => m.available)}
       $={(self) => {
         // Clic en cualquier parte de la píldora abre el popup (widget/MediaPlayer.tsx)
@@ -281,19 +278,17 @@ function MediaPill() {
         self.add_controller(scroll)
       }}
     >
-      <box class="media-inner" spacing={6} valign={Gtk.Align.CENTER}>
-        <box class="media-cover" valign={Gtk.Align.CENTER}
-          css={mediaState.as(m => m.cover ? `background-image: url("file://${m.cover}");` : "")}
-        >
-          <label class="media-cover-fallback" label=""
-            visible={mediaState.as(m => !m.cover)} />
-        </box>
-
-        <label class="media-title" label={mediaState.as(m => m.title)}
-          maxWidthChars={18} ellipsize={Pango.EllipsizeMode.END} />
-        <label class="media-artist" label={mediaState.as(m => m.artist)}
-          maxWidthChars={14} ellipsize={Pango.EllipsizeMode.END} />
+      <box class="media-cover" valign={Gtk.Align.CENTER}
+        css={mediaState.as(m => m.cover ? `background-image: url("file://${m.cover}");` : "")}
+      >
+        <label class="media-cover-fallback" label=""
+          visible={mediaState.as(m => !m.cover)} />
       </box>
+
+      <label class="media-title" label={mediaState.as(m => m.title)}
+        maxWidthChars={18} ellipsize={Pango.EllipsizeMode.END} />
+      <label class="media-artist" label={mediaState.as(m => m.artist)}
+        maxWidthChars={14} ellipsize={Pango.EllipsizeMode.END} />
     </box>
   )
 }
@@ -442,20 +437,18 @@ function Sep() {
 
 function SystemPill() {
   return (
-    <box class="pill-ring">
-      <box class="sys-inner" spacing={4} valign={Gtk.Align.CENTER}>
-        <HardwareStats />
-        <Sep />
-        <Volume />
-        <Sep />
-        <NetworkWidget />
-        <Sep />
-        <BatteryWidget />
-        <Sep />
-        <Notifications />
-        <Sep />
-        <PowerButton />
-      </box>
+    <box class="sys-inner" spacing={4} valign={Gtk.Align.CENTER}>
+      <HardwareStats />
+      <Sep />
+      <Volume />
+      <Sep />
+      <NetworkWidget />
+      <Sep />
+      <BatteryWidget />
+      <Sep />
+      <Notifications />
+      <Sep />
+      <PowerButton />
     </box>
   )
 }

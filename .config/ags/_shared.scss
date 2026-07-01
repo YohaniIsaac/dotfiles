@@ -42,12 +42,9 @@ $border-intensity: 0.35;
   background: rgba($surface, $opacity);
 }
 
-// Degradado real en el borde — técnica de DOS boxes anidados, no de background-clip (esa la
-// probamos y no renderiza en este GTK4 pese a parsear bien). Este "aro" exterior pinta el
-// degradado como su propio fondo; el padding acá ES el grosor visible del borde. Adentro va
-// un box con @include pill-fill (el contenido real) que tapa todo menos ese margen — el
-// degradado que se ve es literalmente el fondo del aro asomando por los bordes. 100% confiable
-// porque son solo dos fondos apilados, sin depender de ningún soporte especial de recorte.
+// Aro con degradado — técnica de dos boxes anidados. YA NO la usan las píldoras de la barra
+// (pasaron a borde sólido, ver bar-pill), pero SÍ la sigue usando el popup (.popup-ring en
+// _mediaplayer.scss), así que no la borro.
 @mixin pill-ring($width: 2px) {
   background: linear-gradient(135deg, rgba($primary, $border-intensity), rgba($primary-dim, $border-intensity));
   border-radius: $radius;
@@ -55,16 +52,16 @@ $border-intensity: 0.35;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 
-// Forma visual del contenido interno de cada píldora (reloj, workspaces, sistema) — va DENTRO
-// de un .pill-ring (ver arriba). No lleva box-shadow propio (ya lo pone el aro exterior).
-//
-// Opción 2 (probando): prioriza transparencia real por sobre que el degradado del aro no se
-// filtre — a este nivel de opacidad se va a notar algo de tinte/degradado en el interior.
-// Si no convence, opción 3 es volver a borde sólido sin degradado (sin este conflicto).
+// Forma visual de cada píldora de la barra (reloj, workspaces, sistema, spotify) — UNA sola caja.
+// Borde sólido (no degradado): así fondo y borde son 100% independientes — el borde se dibuja
+// solo en el filo (paso propio del render de GTK4), no detrás del contenido, por lo que no
+// se mezcla con el fondo transparente. Fondo y borde tienen cada uno su variable de intensidad.
 @mixin bar-pill {
-  @include pill-fill;
-  border-radius: calc(#{$radius} - 2px);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  @include pill-fill;                                    // fondo transparente ($fill-intensity)
+  border: 2px solid rgba($primary, $border-intensity);  // borde sólido, independiente ($border-intensity)
+  border-radius: $radius;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5),
+              inset 0 1px 0 rgba(255,255,255,0.06);
   padding: 3px 12px;   // vertical · horizontal — controla alto y ancho de la píldora
   min-height: 26px;    // altura mínima — sube para una barra más alta
 }

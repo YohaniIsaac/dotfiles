@@ -32,7 +32,8 @@ window.MediaPlayer {
 
   > * { background: transparent; }
 
-  // Aro exterior con degradado real (mismo mecanismo que .pill-ring en _bar.scss).
+  // Aro exterior con degradado real (mixin pill-ring en _shared.scss). Solo el popup usa esta
+  // técnica ahora — las píldoras de la barra pasaron a borde sólido.
   .popup-ring {
     @include pill-ring(1px);   // 1px — el popup tenía borde más fino que las píldoras (2px)
     min-width: 380px;          // ancho del popup — carátula a la izquierda, todo lo demás a la derecha

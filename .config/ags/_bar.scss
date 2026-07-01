@@ -8,17 +8,6 @@
 window.BottomBar {
   @include bar-window;
 
-  // Aro exterior con degradado real (ver pill-ring en _shared.scss) — envuelve cada .X-inner.
-  .pill-ring {
-    @include pill-ring;
-    transition: opacity 150ms ease;
-
-    &.paused {
-      // Spotify pausado — misma píldora, menos protagonismo visual
-      opacity: 0.6;
-    }
-  }
-
   // ── Reloj (sección izquierda) ──────────────────────────────────────────────
 
   .clock-inner {
@@ -83,10 +72,15 @@ window.BottomBar {
   .media-inner {
     @include bar-pill;
     padding: 3px 10px;
-    transition: background 150ms ease;
+    transition: background 150ms ease, opacity 150ms ease;
 
     &:hover {
       background: $surface-high;   // única señal de que la píldora entera es clickeable (abre el popup)
+    }
+
+    &.paused {
+      // Spotify pausado — misma píldora, menos protagonismo visual
+      opacity: 0.6;
     }
   }
 
