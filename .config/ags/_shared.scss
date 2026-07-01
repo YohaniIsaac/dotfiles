@@ -17,11 +17,15 @@ $font:      "JetBrainsMono Nerd Font";
 // 1 = totalmente sólido.
 $fill-intensity: 0.45;
 
-// Intensidad del BORDE — degradado $primary/$primary-dim de Matugen. Independiente del relleno,
-// pero como el relleno es semi-transparente y va ENCIMA del borde, algo de este color siempre
-// se va a filtrar visualmente al interior — no es un bug, es la naturaleza de la técnica (ver
-// nota en bar-pill más abajo).
+// Intensidad del BORDE sólido ($primary de Matugen). Independiente del relleno — el borde se
+// dibuja solo en el filo, no se mezcla con el fondo. 0 = sin borde, 1 = borde totalmente opaco.
 $border-intensity: 0.35;
+
+// Glow / halo — resplandor de color difuminado alrededor de la píldora ($primary de Matugen).
+// $glow-intensity = opacidad (0 = apagado, subilo para más presencia).
+// $glow-size = qué tan lejos/difuso llega el halo, en px.
+$glow-intensity: 0.9;
+$glow-size:      8px;
 
 // ── Mixins compartidos ─────────────────────────────────────────────────────────
 
@@ -60,7 +64,9 @@ $border-intensity: 0.35;
   @include pill-fill;                                    // fondo transparente ($fill-intensity)
   border: 2px solid rgba($primary, $border-intensity);  // borde sólido, independiente ($border-intensity)
   border-radius: $radius;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5),
+  // 1ª capa = glow de color ($glow-*) · 2ª = sombra de profundidad · 3ª = brillo interno superior
+  box-shadow: 0 0 $glow-size rgba($primary, $glow-intensity),
+              0 4px 16px rgba(0,0,0,0.5),
               inset 0 1px 0 rgba(255,255,255,0.06);
   padding: 3px 12px;   // vertical · horizontal — controla alto y ancho de la píldora
   min-height: 26px;    // altura mínima — sube para una barra más alta
