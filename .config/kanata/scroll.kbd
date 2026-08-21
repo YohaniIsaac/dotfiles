@@ -1,0 +1,32 @@
+#|
+Scroll con teclado: mantener Caps Lock + hjkl para scrollear
+(estilo vim: h=izquierda, j=abajo, k=arriba, l=derecha).
+Caps Lock sigue funcionando normal con un toque corto (tap-hold):
+tap = Caps Lock de toda la vida, hold = capa de scroll.
+Todas las demás teclas del teclado no están en defsrc, así que
+kanata las deja pasar sin tocarlas.
+|#
+
+(defcfg
+  process-unmapped-keys no
+)
+
+(defsrc
+  caps h j k l
+)
+
+(defalias
+  scroll-layer (tap-hold-press 200 200 caps (layer-while-held scroll))
+  wh-left      (mwheel-left  50 120)
+  wh-down      (mwheel-down  50 120)
+  wh-up        (mwheel-up    50 120)
+  wh-right     (mwheel-right 50 120)
+)
+
+(deflayer base
+  @scroll-layer _ _ _ _
+)
+
+(deflayer scroll
+  _  @wh-left @wh-down @wh-up @wh-right
+)
