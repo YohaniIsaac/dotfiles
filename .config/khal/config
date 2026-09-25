@@ -16,6 +16,6 @@ show_all_days = False
 [calendars]
 
 [[personal]]
-path = /home/yt/.local/share/calendars/personal/
+path = ~/.local/share/calendars/personal/
 color = light blue
 readonly = True
