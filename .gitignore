@@ -11,6 +11,7 @@
 .wget-hsts
 .current_wallpaper
 .claude.json
+.gitconfig.local
 
 # --- Directorios grandes / binarios / privados ---
 .cache/

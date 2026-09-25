@@ -15,3 +15,7 @@
 	width = variable
 [pager]
 	diff = true
+
+# Overrides por máquina (identidad, etc.). No se versiona; si no existe se ignora.
+[include]
+	path = ~/.gitconfig.local
