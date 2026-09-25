@@ -41,6 +41,11 @@ xdg-desktop-portal-hyprland
 # --- AGS / Widget Layer ---
 aylurs-gtk-shell
 dart-sass
+libastal-battery-git
+libastal-hyprland-git
+libastal-mpris-git
+libastal-network-git
+libastal-wireplumber-git
 
 # --- Calendar ---
 khal
