@@ -10,10 +10,10 @@ configuration {
 }
 
 /* Import matugen colors */
-@import "/home/yt/.config/rofi/colors.rasi"
+@import "colors.rasi"
 
 /* Import rounded-dark theme */
-@import "/home/yt/.config/rofi/themes/rounded-dark.rasi"
+@import "themes/rounded-dark.rasi"
 
 window {
     border-color: @border;

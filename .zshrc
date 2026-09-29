@@ -35,8 +35,8 @@ export PATH="$HOME/.local/bin:$PATH"
 export EDITOR=nvim
 export VISUAL=nvim
 
-# --- JDK (Gradle/Android) ---
-export JAVA_HOME=/home/yt/.gradle/jdks/eclipse_adoptium-25-amd64-linux.2
+# --- JDK (Gradle/Android): el más nuevo que haya bajado Gradle, si hay alguno ---
+() { local jdks=( $HOME/.gradle/jdks/*(N/nOn) ); (( $#jdks )) && export JAVA_HOME=$jdks[1] }
 
 # --- Claude Code ---
 export CLAUDE_CODE_NO_FLICKER=1
@@ -77,7 +77,7 @@ bindkey '^[[F' end-of-line
 bindkey '^[[3~' delete-char
 
 # opencode
-export PATH=/home/yt/.opencode/bin:$PATH
+[[ -d $HOME/.opencode/bin ]] && export PATH="$HOME/.opencode/bin:$PATH"
 
 # --- Zephyr workspaces ---
 # Activa el .venv más cercano subiendo desde $PWD. Se detiene en ~/git (no lo revisa ni sube más).
@@ -127,8 +127,11 @@ zenv() {
 #   - the correct directories to the PATH
 #   - auto-completion for the opam binary
 # This section can be safely removed at any time if needed.
-[[ ! -r '/home/yt/.opam/opam-init/init.zsh' ]] || source '/home/yt/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
+[[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] || source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
 # END opam configuration
 
-export PATH=$PATH:/opt/ba2-toolchain/bin
-alias bossac='/home/yt/zephyr-sdk-0.16.8/sysroots/x86_64-pokysdk-linux/usr/bin/bossac'
+# --- Herramientas que solo existen en algunas máquinas: se agregan si están ---
+[[ -d /opt/ba2-toolchain/bin ]] && export PATH="$PATH:/opt/ba2-toolchain/bin"
+
+# bossac del Zephyr SDK más nuevo instalado en ~ (si hay alguno)
+() { local sdks=( $HOME/zephyr-sdk-*(N/nOn) ); (( $#sdks )) && alias bossac="$sdks[1]/sysroots/x86_64-pokysdk-linux/usr/bin/bossac" }
