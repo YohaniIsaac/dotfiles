@@ -53,8 +53,8 @@ export default function MediaPlayer() {
       $={(self) => {
         // anchor/marginTop se fijan acá, no como prop del constructor: pasar anchor en las
         // props iniciales del <window> hacía que Gtk.Application nunca registrara la ventana
-        // (app.toggle_window fallaba con "no window registered"). Verificado — Calendar, que no
-        // tiene anchor, sí se registraba bien.
+        // (app.toggle_window fallaba con "no window registered"). Verificado — el antiguo popup
+        // de calendario, que no tenía anchor, sí se registraba bien.
         //
         // Orden importa: margin ANTES que anchor (si no, el margen queda ignorado). Verificado
         // con hyprctl layers: Hyprland ya descuenta la zona exclusiva de la barra (exclusivity:

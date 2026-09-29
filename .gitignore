@@ -13,8 +13,7 @@
 .claude.json
 .viminfo
 
-# --- Privados: tokens / URLs secretas (ver README, "Archivos privados") ---
-.config/khal/calendars.conf
+# --- Privados: tokens / certificados ---
 .emulator_console_auth_token
 .pki/
 

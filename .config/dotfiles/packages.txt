@@ -42,9 +42,6 @@ xdg-desktop-portal-hyprland
 aylurs-gtk-shell
 dart-sass
 
-# --- Calendar ---
-khal
-
 # --- Wallpaper & Theming ---
 awww
 waypaper
