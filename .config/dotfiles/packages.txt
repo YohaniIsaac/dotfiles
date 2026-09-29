@@ -129,6 +129,18 @@ zathura
 zathura-pdf-mupdf
 neovim-remote
 
+# --- LaTeX (VimTeX + texlab en Neovim; latexmk y chktex vienen en texlive-binextra) ---
+texlive-basic
+texlive-binextra
+texlive-fontsrecommended
+texlive-langspanish
+texlive-latex
+texlive-latexextra
+texlive-latexrecommended
+texlive-mathscience
+texlive-pictures
+texlive-plaingeneric
+
 # --- Printing ---
 cups
 epson-inkjet-printer-escpr
@@ -166,3 +178,22 @@ yay
 # qmodbus-git
 # saleae-logic2
 # snapd
+# dtc
+# gperf
+# python-pyserial
+# avr-gcc
+# avr-binutils
+# avr-libc
+# avrdude
+# cutecom
+# kicad-library
+# freecad
+
+# =============================================================
+# Android / contenedores (optional)
+# =============================================================
+
+# android-studio
+# docker
+# docker-compose
+# act
