@@ -32,11 +32,11 @@
 .local/bin/pymupdf
 .npm/
 .opencode/
-zephyr-sdk-0.16.8/
-git/
-Documents/
-Downloads/
-Pictures/
+/zephyr-sdk-0.16.8/
+/git/
+/Documents/
+/Downloads/
+/Pictures/
 
 # --- SDKs, toolchains y caches de desarrollo ---
 .android/
@@ -44,13 +44,13 @@ Pictures/
 .gradle/
 .java/
 .joulescope/
-Android/
-go/
+/Android/
+/go/
 
 # --- Repos / proyectos con su propio versionado ---
-fast-export/
-forgejo-local-runner/
-personal-git/
+/fast-export/
+/forgejo-local-runner/
+/personal-git/
 
 # --- SSH: solo config, nunca claves ---
 .ssh/id_*
