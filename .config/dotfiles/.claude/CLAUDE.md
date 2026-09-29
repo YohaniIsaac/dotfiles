@@ -12,22 +12,31 @@ Escritorio Arch Linux + Hyprland. La guía de instalación y el detalle de cada 
 - El repo bare no tiene fetch refspec: `origin/main` no se actualiza y `dotfiles status` no avisa de commits sin pushear. Para ver lo pendiente: `dotfiles fetch origin && dotfiles log FETCH_HEAD..main`.
 - El work-tree es `$HOME`: nunca `reset --hard`, `checkout .` ni `stash` a ciegas. Para rehacer commits locales, `reset --soft` y `reset` (mixed) no tocan archivos.
 
-## Monitores
+## Varias máquinas (hostname)
 
-| Monitor      | Conector | Modo              | Posición         | Workspaces       |
-|--------------|----------|-------------------|------------------|------------------|
-| SAC LED      | DP-1     | 1920×1080 @75 Hz  | arriba izquierda | 1–10 (principal) |
-| ASUS VA27EHF | HDMI-A-1 | 1920×1080 @100 Hz | arriba derecha   | 11–20            |
-| Laptop       | eDP-1    | preferred @1.25x  | abajo            | 21–30            |
+Una sola config para todas las laptops; la llave es el **hostname** (`yt-work` = esta laptop del trabajo, `yt-home` = la de la casa), nunca el usuario (`yt` en todas). Reglas:
 
-`Super+1..0` va al workspace N *del monitor activo* (`hypr/scripts/workspace-nav.sh`). `Super+F1/F2/F3` enfoca SAC / ASUS / laptop.
+- **Primero detectar** (`[[ -d … ]]`, buscar por nombre, `~` en vez de `/home/yt`). Nunca escribir rutas absolutas ni nombres de monitor fuera de `hypr/hosts/`.
+- **Monitores**: `hypr/hosts/<hostname>.conf` define la disposición y los roles `$mon1/$mon2/$mon3` (bloques de workspaces 1–10/11–20/21–30 y Super+F1/F2/F3; `none` si no hay). `hypr/host.conf` es un symlink no trackeado que crea `hypr/scripts/machine-setup.sh` (`--force` para volver a elegir). Los scripts y la barra leen los roles desde Hyprland (`hyprctl workspacerules -j`, helpers en `hypr/scripts/lib-monitors.sh`).
+- **Git**: identidad personal por defecto y la de Innovex en `~/git/` (`includeIf` → `~/.config/git/work.gitconfig`).
+- `Hyprland --verify-config -c <archivo>` valida la sintaxis, pero **no** detecta variables sin definir: verificar la expansión en vivo con `hyprctl workspacerules -j` / `hyprctl binds`.
+
+Monitores de `yt-work` (esta laptop):
+
+| Monitor      | Conector | Modo              | Posición         | Rol / workspaces        |
+|--------------|----------|-------------------|------------------|-------------------------|
+| SAC LED      | DP-1     | 1920×1080 @75 Hz  | arriba izquierda | `$mon1` 1–10 (principal) |
+| ASUS VA27EHF | HDMI-A-1 | 1920×1080 @100 Hz | arriba derecha   | `$mon2` 11–20           |
+| Laptop       | eDP-1    | preferred @1.25x  | abajo            | `$mon3` 21–30           |
+
+`Super+1..0` va al workspace N *del monitor activo* (`hypr/scripts/workspace-nav.sh`).
 
 ## Barra (AGS v3 / Astal GTK4)
 
 - Una sola barra por monitor, anclada arriba, en `widget/bars/BottomBar.tsx` (el nombre quedó de cuando estaba abajo):
   - Izquierda: workspaces del monitor.
   - Centro: reloj y Spotify (click → popup `media-popup` de `widget/MediaPlayer.tsx`).
-  - Derecha: CPU/RAM/temperatura (click → `btop`; lee `/sys/class/hwmon/hwmon4`, que en esta laptop es `coretemp`), volumen, red, batería, notificaciones (swaync) y botón de apagado (click → `hypr/scripts/wlogout.sh`, click derecho → hyprlock).
+  - Derecha: CPU/RAM/temperatura (click → `btop`; el sensor se busca por nombre al arrancar: `coretemp`/`k10temp`/`zenpower`), volumen, red, batería, notificaciones (swaync) y botón de apagado (click → `hypr/scripts/wlogout.sh`, click derecho → hyprlock).
 - `widget/mpris.ts`: estado compartido de Spotify/MPRIS. `app.ts` registra el popup y crea una barra por monitor. Los prototipos viejos (`Bar.tsx`, `ClockBar.tsx`, `WorkspaceBar.tsx`, `SystemBar.tsx`) se borraron el 2026-09-29.
 - Estilos: `style.scss` importa `_bar.scss` y `_mediaplayer.scss`. Los mixins están en `_shared.scss`. `colors.scss` lo genera Matugen y no se trackea (ver Theming).
 - Librerías: AstalHyprland, AstalWp, AstalNetwork, AstalBattery y AstalMpris (paquetes `libastal-*-git`). La reactividad usa `gnim` (`createPoll`, `createExternal`, `.as()`).
@@ -54,7 +63,7 @@ Antes de meter un comando en un poll, verificar que termine: `timeout 5 <cmd>; e
 
 `Super+W` → `hypr/scripts/wallpaperSelect.sh`: elige el wallpaper, el color base y el esquema. Después `matugen` rellena los templates de `~/.config/matugen/templates/`:
 - `hypr/colors.conf` (+ `hyprctl reload`), `rofi/colors.rasi` y `ags/colors.scss`: generados por máquina e **ignorados por git**. Idea del usuario: cada laptop genera sus colores según sus wallpapers; en el repo solo va un tema por defecto. No volver a trackear colores generados.
-- Tema por defecto: `Pictures/wallpapers/groot_1.jpg` + sus colores en `matugen/defaults/`. `matugen/apply-defaults.sh` los copia solo donde falte un archivo de colores (nunca pisa) y recarga Hyprland si copió `colors.conf`. Lo llaman `install.sh` y `restore-wallpaper.sh`. Sin esos archivos, Hyprland da errores, Rofi no abre y AGS no compila.
+- Tema por defecto: `Pictures/wallpapers/groot_1.jpg` + sus colores en `matugen/defaults/`. `matugen/apply-defaults.sh` los copia solo donde falte un archivo de colores (nunca pisa). Lo llama `hypr/scripts/machine-setup.sh` (desde `install.sh` y el autostart), que recarga Hyprland si creó algo. Sin esos archivos, Hyprland da errores, Rofi no abre y AGS no compila.
 - `wallpaperSelect.sh` deja `~/.current_wallpaper` apuntando al elegido, y al iniciar sesión `hypr/scripts/restore-wallpaper.sh` lo vuelve a poner (o `groot_1.jpg`, que está en el repo). Ojo: `awww-daemon` no termina, así que nunca encadenar `awww-daemon && …`.
 
 ## Otros componentes

@@ -175,7 +175,7 @@ echo "KEYMAP=la-latin1" > /etc/vconsole.conf
 
 ### 12. Configurar hostname
 
-Elige el nombre que quieras para tu máquina (sin espacios ni caracteres especiales):
+Elige el nombre que quieras para tu máquina (sin espacios ni caracteres especiales). Los dotfiles usan el hostname para saber en qué máquina están (ver [Varias máquinas](#varias-máquinas)): la del trabajo es `yt-work` y la de la casa `yt-home`.
 
 ```bash
 echo "tu-hostname" > /etc/hostname
@@ -370,32 +370,21 @@ hypr-generate-colors-wallpapers
 
 ### 24. Configurar monitores
 
-Edita `~/.config/hypr/monitors.conf` según tu setup. Así está en este equipo:
-
-```bash
-# DP-1 (SAC LED MONITOR) - arriba izquierda
-monitor = DP-1, 1920x1080@74.97, 0x0, 1
-
-# HDMI-A-1 (ASUS VA27EHF) - arriba derecha
-monitor = HDMI-A-1, 1920x1080@100.05, 1920x1080, 1
-
-# eDP-1 (laptop) - abajo del DP-1
-monitor = eDP-1, preferred, 3840x2160, 1.25
-```
-
-Con un solo monitor basta con:
-
-```bash
-monitor = , preferred, auto, 1
-```
-
-Cada monitor tiene su propio rango de workspaces (`workspace.conf`): DP-1 usa 1–10, HDMI-A-1 11–20 y eDP-1 21–30. Si cambian los conectores, actualiza también `workspace.conf` y los atajos `Super + F1/F2/F3` de `custom.conf`.
-
-Identifica los nombres de tus monitores con:
+Los monitores de cada máquina están en `~/.config/hypr/hosts/<hostname>.conf` (`yt-work.conf`, `yt-home.conf`). `install.sh` ya enlazó el de esta máquina como `~/.config/hypr/host.conf`. Identifica los nombres de tus monitores y ajusta ese archivo:
 
 ```bash
 hyprctl monitors
 ```
+
+Cada archivo define la disposición (`monitor = …`) y qué monitor cumple cada rol:
+
+```bash
+$mon1 = HDMI-A-1   # workspaces 1–10 y Super + F1
+$mon2 = eDP-1      # workspaces 11–20 y Super + F2
+$mon3 = none       # workspaces 21–30 y Super + F3 ("none" si no hay)
+```
+
+Para una máquina nueva, copia `hosts/default.conf` como `hosts/<hostname>.conf`, ajústalo y corre `~/.config/hypr/scripts/machine-setup.sh --force`. Detalles en [Varias máquinas](#varias-máquinas).
 
 ---
 
@@ -494,8 +483,11 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 │   │   ├── README.md
 │   │   ├── packages.txt       # Paquetes del sistema (pacman + AUR)
 │   │   └── install.sh         # Instala packages.txt (ejecutar tras clonar)
-│   ├── hypr/                  # Hyprland: monitores, ventanas, keybindings, autostart…
-│   │   └── scripts/           # start-bar.sh, restore-wallpaper.sh, wlogout.sh, workspaces…
+│   ├── git/work.gitconfig     # Identidad de git del trabajo (repos en ~/git/)
+│   ├── hypr/                  # Hyprland: ventanas, keybindings, autostart…
+│   │   ├── hosts/             # Monitores de cada máquina: yt-work, yt-home, default
+│   │   ├── host.conf          # Symlink (no trackeado) al hosts/<hostname>.conf de esta máquina
+│   │   └── scripts/           # machine-setup.sh, start-bar.sh, restore-wallpaper.sh, workspaces…
 │   ├── kanata/                # Remapeo de teclado (Caps Lock + hjkl = scroll)
 │   │   ├── scroll.kbd         # Config de kanata
 │   │   ├── system/            # Regla udev y carga de uinput (van en /etc)
@@ -542,7 +534,7 @@ Matugen pone el wallpaper con awww y genera los colores desde los templates de `
 
 Esos tres archivos de colores **no se trackean**: cada máquina genera los suyos según sus wallpapers, y así no cambian en git cada vez que eliges otro.
 
-Lo que sí está en el repo es un tema por defecto para una máquina nueva: el wallpaper `~/Pictures/wallpapers/groot_1.jpg` y sus colores en `~/.config/matugen/defaults/`. `~/.config/matugen/apply-defaults.sh` copia esos colores **solo a los archivos que todavía no existen**, así que nunca pisa los de tu wallpaper actual. Sin ellos, Hyprland arranca con errores, Rofi no abre y la barra de AGS no compila. Lo llaman `install.sh` y `hypr/scripts/restore-wallpaper.sh`, que al iniciar sesión además vuelve a poner el último wallpaper elegido (`~/.current_wallpaper`), o `groot_1.jpg` si todavía no elegiste ninguno.
+Lo que sí está en el repo es un tema por defecto para una máquina nueva: el wallpaper `~/Pictures/wallpapers/groot_1.jpg` y sus colores en `~/.config/matugen/defaults/`. `~/.config/matugen/apply-defaults.sh` copia esos colores **solo a los archivos que todavía no existen**, así que nunca pisa los de tu wallpaper actual. Sin ellos, Hyprland arranca con errores, Rofi no abre y la barra de AGS no compila. Lo llama `hypr/scripts/machine-setup.sh` (desde `install.sh` y al iniciar sesión). Al iniciar sesión, `hypr/scripts/restore-wallpaper.sh` además vuelve a poner el último wallpaper elegido (`~/.current_wallpaper`), o `groot_1.jpg` si todavía no elegiste ninguno.
 
 Para cambiar el tema por defecto: elige el wallpaper con `Super + W`, agrégalo al repo (`Pictures/` está ignorado, por eso el `-f`) y copia sus colores a `defaults/`:
 
@@ -586,6 +578,35 @@ Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit
 
 ---
 
+## Varias máquinas
+
+Una sola config y un solo repo para todas las laptops. La llave es el **hostname** (`yt-work`, `yt-home`), no el usuario: el usuario es `yt` en todas, así `$HOME` y las rutas son iguales. Se resuelve con tres técnicas, de la más a la menos preferida:
+
+**1. Detectar en vez de suponer**, sin saber en qué máquina estás:
+
+- `.zshrc` agrega cada herramienta solo si existe: el JDK más nuevo que bajó Gradle, `bossac` del Zephyr SDK instalado, `/opt/ba2-toolchain`, opencode y opam.
+- La barra busca el sensor de temperatura por nombre (`coretemp` en Intel, `k10temp`/`zenpower` en AMD).
+- El dashboard de Neovim solo muestra los proyectos que existen en esa máquina.
+- Rutas relativas o con `~`, nunca `/home/yt/…`.
+
+**2. Un archivo por máquina** para lo que no se puede detectar: los monitores. `~/.config/hypr/hosts/<hostname>.conf` define la disposición y los roles `$mon1/$mon2/$mon3`. `workspace.conf` y los atajos F1–F3 usan esas variables, y `workspace-nav.sh`, `init-workspaces.sh`, `toggle-main-monitors.sh` y la barra le preguntan a Hyprland qué bloque de workspaces tiene cada monitor (`hyprctl workspacerules -j`, en `hypr/scripts/lib-monitors.sh`). No hay nombres de monitor escritos a mano fuera de `hosts/`.
+
+`~/.config/hypr/scripts/machine-setup.sh` enlaza `hosts/<hostname>.conf` como `hypr/host.conf` (o `hosts/default.conf` si esa máquina todavía no tiene archivo) y pone los colores por defecto de Matugen. Solo crea lo que falta; lo llaman `install.sh` y el autostart. Si cambias el hostname o creas el archivo de una máquina: `machine-setup.sh --force`.
+
+**3. Por carpeta, no por máquina**, para lo que depende del proyecto: `~/.gitconfig` usa tu identidad personal por defecto y la de Innovex en los repos dentro de `~/git/` (`includeIf` → `~/.config/git/work.gitconfig`).
+
+**Agregar una máquina nueva:**
+
+```bash
+sudo hostnamectl set-hostname yt-home    # y cambia el nombre en /etc/hosts (paso 12)
+cp ~/.config/hypr/hosts/default.conf ~/.config/hypr/hosts/yt-home.conf   # si no existe
+nvim ~/.config/hypr/hosts/yt-home.conf   # monitores según `hyprctl monitors`
+~/.config/hypr/scripts/machine-setup.sh --force
+dotfiles add .config/hypr/hosts/yt-home.conf && dotfiles commit -m "hypr: monitores de yt-home"
+```
+
+---
+
 ## Llevar esta config a otra máquina
 
 Siguiendo los pasos 18–25 queda todo lo que está en el repo. Esto no está en git y hay que traerlo o rehacerlo a mano:
@@ -603,9 +624,7 @@ Y esto es **específico de esta laptop**. No lo copies tal cual; revísalo:
 
 - **Parámetros del kernel** en `/etc/default/grub` (`i915.enable_psr=0 intel_idle.max_cstate=1 pcie_aspm=off nvme_core.default_ps_max_latency_us=0`) y `/etc/systemd/logind.conf.d/no-suspend.conf` (ignora cerrar la tapa). Son mitigaciones para los cuelgues de este hardware y gastan más batería. No están en el repo a propósito.
 - **Suspensión desactivada** en `hypr/hypridle.conf`: aquí `systemctl suspend` cuelga en s2idle. En otra máquina puedes volver a activarla descomentando el bloque `listener` del final.
-- **Monitores**: `monitors.conf`, `workspace.conf`, los atajos `Super + F1/F2/F3` de `custom.conf` y `toggle-main-monitors.sh` asumen DP-1, HDMI-A-1 y eDP-1 (paso 24).
-- **Temperatura de la CPU en la barra**: `BottomBar.tsx` lee `/sys/class/hwmon/hwmon4`, que aquí es `coretemp`. En otra máquina el número puede cambiar; revisa `cat /sys/class/hwmon/hwmon*/name`.
-- **Rutas en `.zshrc`**: `JAVA_HOME` (JDK que bajó Gradle), el alias `bossac` (Zephyr SDK 0.16.8), `/opt/ba2-toolchain/bin`, `~/.opencode/bin` y opam. Solo sirven si instalas esas herramientas.
+- **Monitores**: van en `hypr/hosts/<hostname>.conf` (paso 24 y [Varias máquinas](#varias-máquinas)).
 
 ---
 
