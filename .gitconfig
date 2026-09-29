@@ -1,8 +1,6 @@
-# Identidad personal por defecto. Los repos dentro de ~/git/ (trabajo) usan la de
-# Innovex vía el includeIf del final. Un repo con user.* local sigue mandando.
 [user]
-	email = yohani.tripai.yt@gmail.com
-	name = YohaniIsaac
+	email = yohani.tripai@innovex.cl
+	name = Yohani Tripai
 [core]
 	editor = nvim
 	pager = delta
@@ -18,5 +16,3 @@
 	width = variable
 [pager]
 	diff = true
-[includeIf "gitdir:~/git/"]
-	path = ~/.config/git/work.gitconfig

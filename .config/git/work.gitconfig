@@ -1,4 +1,0 @@
-# Identidad de trabajo: la incluye ~/.gitconfig para los repos dentro de ~/git/
-[user]
-	email = yohani.tripai@innovex.cl
-	name = Yohani Tripai
