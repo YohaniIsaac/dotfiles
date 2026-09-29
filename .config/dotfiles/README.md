@@ -358,13 +358,9 @@ El repo solo trae `~/Pictures/wallpapers/groot_1.jpg`. Copia el resto de tus wal
 rsync -av otra-maquina:Pictures/wallpapers/ ~/Pictures/wallpapers/
 ```
 
-Los archivos de colores de Hyprland (`hypr/colors.conf`) y Rofi (`rofi/colors.rasi`) los genera Matugen y no están en el repo. Hasta que existan, Hyprland muestra errores de config y `Super + D` no abre. Genéralos una vez desde una terminal dentro de Hyprland:
+No hace falta generar colores a mano: `install.sh` (paso 18) copia los colores por defecto, que son los de `groot_1.jpg` (ver [Theming](#theming-dinámico-con-matugen)). La primera sesión arranca con ese wallpaper y esos colores. Después eliges tu wallpaper con `Super + W` y Matugen genera los colores de esta máquina.
 
-```bash
-matugen image ~/Pictures/wallpapers/groot_1.jpg -m dark --source-color-index 0
-```
-
-Después pre-genera las combinaciones de color del selector de wallpapers (`Super + W`):
+Para que el selector de wallpapers (`Super + W`) muestre los colores de cada imagen, pre-genera su caché:
 
 ```bash
 hypr-generate-colors-wallpapers
@@ -505,7 +501,10 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 │   │   ├── system/            # Regla udev y carga de uinput (van en /etc)
 │   │   └── setup.sh           # Instala system/, grupos y servicio (paso 25)
 │   ├── kitty/                 # Terminal
-│   ├── matugen/               # Templates de theming dinámico (Material You)
+│   ├── matugen/               # Theming dinámico (Material You)
+│   │   ├── templates/         # Cómo se aplican los colores a Hyprland, Rofi y AGS
+│   │   ├── defaults/          # Colores de groot_1.jpg, el tema de una máquina nueva
+│   │   └── apply-defaults.sh  # Copia defaults/ solo donde todavía no hay colores
 │   ├── nvim/                  # Neovim (submódulo git)
 │   ├── ranger/rc.conf         # File manager TUI (solo los cambios sobre el default)
 │   ├── rofi/                  # Launcher y temas
@@ -541,9 +540,20 @@ Matugen pone el wallpaper con awww y genera los colores desde los templates de `
 | Rofi (`rofi/colors.rasi`) | La próxima vez que se abre |
 | AGS (`ags/colors.scss`) | Al reiniciar la barra: `ags quit` (start-bar.sh la relanza) |
 
-Los de Hyprland y Rofi se generan y están en `.gitignore` (en una instalación nueva hay que generarlos una vez: ver paso 23). `ags/colors.scss` sí se trackea porque sin él AGS no compila en un clon nuevo; por eso aparece modificado cada vez que cambias de wallpaper.
+Esos tres archivos de colores **no se trackean**: cada máquina genera los suyos según sus wallpapers, y así no cambian en git cada vez que eliges otro.
 
-Al iniciar sesión, `hypr/scripts/restore-wallpaper.sh` vuelve a poner el último wallpaper elegido (`~/.current_wallpaper`), o `groot_1.jpg` si todavía no elegiste ninguno.
+Lo que sí está en el repo es un tema por defecto para una máquina nueva: el wallpaper `~/Pictures/wallpapers/groot_1.jpg` y sus colores en `~/.config/matugen/defaults/`. `~/.config/matugen/apply-defaults.sh` copia esos colores **solo a los archivos que todavía no existen**, así que nunca pisa los de tu wallpaper actual. Sin ellos, Hyprland arranca con errores, Rofi no abre y la barra de AGS no compila. Lo llaman `install.sh` y `hypr/scripts/restore-wallpaper.sh`, que al iniciar sesión además vuelve a poner el último wallpaper elegido (`~/.current_wallpaper`), o `groot_1.jpg` si todavía no elegiste ninguno.
+
+Para cambiar el tema por defecto: elige el wallpaper con `Super + W`, agrégalo al repo (`Pictures/` está ignorado, por eso el `-f`) y copia sus colores a `defaults/`:
+
+```bash
+dotfiles add -f ~/Pictures/wallpapers/<nuevo-wallpaper>
+cp ~/.config/hypr/colors.conf ~/.config/matugen/defaults/hypr-colors.conf
+cp ~/.config/rofi/colors.rasi ~/.config/matugen/defaults/rofi-colors.rasi
+cp ~/.config/ags/colors.scss  ~/.config/matugen/defaults/ags-colors.scss
+```
+
+Si cambias el nombre del wallpaper por defecto, actualiza también el fallback de `restore-wallpaper.sh`.
 
 ---
 

@@ -29,7 +29,7 @@ Escritorio Arch Linux + Hyprland. La guía de instalación y el detalle de cada 
   - Centro: reloj y Spotify (click → popup `media-popup` de `widget/MediaPlayer.tsx`).
   - Derecha: CPU/RAM/temperatura (click → `btop`; lee `/sys/class/hwmon/hwmon4`, que en esta laptop es `coretemp`), volumen, red, batería, notificaciones (swaync) y botón de apagado (click → `hypr/scripts/wlogout.sh`, click derecho → hyprlock).
 - `widget/mpris.ts`: estado compartido de Spotify/MPRIS. `app.ts` registra el popup y crea una barra por monitor. Los prototipos viejos (`Bar.tsx`, `ClockBar.tsx`, `WorkspaceBar.tsx`, `SystemBar.tsx`) se borraron el 2026-09-29.
-- Estilos: `style.scss` importa `_bar.scss` y `_mediaplayer.scss`. Los mixins están en `_shared.scss`. `colors.scss` lo genera Matugen, pero se trackea para que AGS compile en un clon nuevo.
+- Estilos: `style.scss` importa `_bar.scss` y `_mediaplayer.scss`. Los mixins están en `_shared.scss`. `colors.scss` lo genera Matugen y no se trackea (ver Theming).
 - Librerías: AstalHyprland, AstalWp, AstalNetwork, AstalBattery y AstalMpris (paquetes `libastal-*-git`). La reactividad usa `gnim` (`createPoll`, `createExternal`, `.as()`).
 
 ### Arranque y reinicio
@@ -53,8 +53,8 @@ Antes de meter un comando en un poll, verificar que termine: `timeout 5 <cmd>; e
 ## Theming (Matugen)
 
 `Super+W` → `hypr/scripts/wallpaperSelect.sh`: elige el wallpaper, el color base y el esquema. Después `matugen` rellena los templates de `~/.config/matugen/templates/`:
-- `hypr/colors.conf` (+ `hyprctl reload`) y `rofi/colors.rasi`: generados e ignorados por git. En una instalación nueva hay que generarlos una vez (README, paso 23), o Hyprland arranca con errores y Rofi no abre.
-- `ags/colors.scss`: generado, pero trackeado (ver arriba).
+- `hypr/colors.conf` (+ `hyprctl reload`), `rofi/colors.rasi` y `ags/colors.scss`: generados por máquina e **ignorados por git**. Idea del usuario: cada laptop genera sus colores según sus wallpapers; en el repo solo va un tema por defecto. No volver a trackear colores generados.
+- Tema por defecto: `Pictures/wallpapers/groot_1.jpg` + sus colores en `matugen/defaults/`. `matugen/apply-defaults.sh` los copia solo donde falte un archivo de colores (nunca pisa) y recarga Hyprland si copió `colors.conf`. Lo llaman `install.sh` y `restore-wallpaper.sh`. Sin esos archivos, Hyprland da errores, Rofi no abre y AGS no compila.
 - `wallpaperSelect.sh` deja `~/.current_wallpaper` apuntando al elegido, y al iniciar sesión `hypr/scripts/restore-wallpaper.sh` lo vuelve a poner (o `groot_1.jpg`, que está en el repo). Ojo: `awww-daemon` no termina, así que nunca encadenar `awww-daemon && …`.
 
 ## Otros componentes
