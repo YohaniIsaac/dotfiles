@@ -483,7 +483,6 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 │   │   ├── README.md
 │   │   ├── packages.txt       # Paquetes del sistema (pacman + AUR)
 │   │   └── install.sh         # Instala packages.txt (ejecutar tras clonar)
-│   ├── git/work.gitconfig     # Identidad de git del trabajo (repos en ~/git/)
 │   ├── hypr/                  # Hyprland: ventanas, keybindings, autostart…
 │   │   ├── hosts/             # Monitores de cada máquina: yt-work, yt-home, default
 │   │   ├── host.conf          # Symlink (no trackeado) al hosts/<hostname>.conf de esta máquina
@@ -580,7 +579,7 @@ Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit
 
 ## Varias máquinas
 
-Una sola config y un solo repo para todas las laptops. La llave es el **hostname** (`yt-work`, `yt-home`), no el usuario: el usuario es `yt` en todas, así `$HOME` y las rutas son iguales. Se resuelve con tres técnicas, de la más a la menos preferida:
+Una sola config y un solo repo para todas las laptops. La llave es el **hostname** (`yt-work`, `yt-home`), no el usuario: el usuario es `yt` en todas, así `$HOME` y las rutas son iguales. Se resuelve con dos técnicas, de la más a la menos preferida:
 
 **1. Detectar en vez de suponer**, sin saber en qué máquina estás:
 
@@ -593,7 +592,12 @@ Una sola config y un solo repo para todas las laptops. La llave es el **hostname
 
 `~/.config/hypr/scripts/machine-setup.sh` enlaza `hosts/<hostname>.conf` como `hypr/host.conf` (o `hosts/default.conf` si esa máquina todavía no tiene archivo) y pone los colores por defecto de Matugen. Solo crea lo que falta; lo llaman `install.sh` y el autostart. Si cambias el hostname o creas el archivo de una máquina: `machine-setup.sh --force`.
 
-**3. Por carpeta, no por máquina**, para lo que depende del proyecto: `~/.gitconfig` usa tu identidad personal por defecto y la de Innovex en los repos dentro de `~/git/` (`includeIf` → `~/.config/git/work.gitconfig`).
+**Identidad de git:** la global (`~/.gitconfig`) es la de Innovex, en todas las máquinas. En cada repo personal se configura a mano:
+
+```bash
+git config user.name YohaniIsaac
+git config user.email yohani.tripai.yt@gmail.com
+```
 
 **Agregar una máquina nueva:**
 
@@ -604,6 +608,8 @@ nvim ~/.config/hypr/hosts/yt-home.conf   # monitores según `hyprctl monitors`
 ~/.config/hypr/scripts/machine-setup.sh --force
 dotfiles add .config/hypr/hosts/yt-home.conf && dotfiles commit -m "hypr: monitores de yt-home"
 ```
+
+> Cambia el hostname justo antes de reiniciar. Brave, Discord y Spotify guardan el hostname en el lock de su perfil (`SingletonLock` → `arch-<pid>`). Si cambia con ellas abiertas, al abrir un link o relanzarlas creen que el perfil está en uso "en otro computador" hasta que las cierres y las vuelvas a abrir.
 
 ---
 

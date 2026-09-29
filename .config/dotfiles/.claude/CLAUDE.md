@@ -18,7 +18,7 @@ Una sola config para todas las laptops; la llave es el **hostname** (`yt-work` =
 
 - **Primero detectar** (`[[ -d … ]]`, buscar por nombre, `~` en vez de `/home/yt`). Nunca escribir rutas absolutas ni nombres de monitor fuera de `hypr/hosts/`.
 - **Monitores**: `hypr/hosts/<hostname>.conf` define la disposición y los roles `$mon1/$mon2/$mon3` (bloques de workspaces 1–10/11–20/21–30 y Super+F1/F2/F3; `none` si no hay). `hypr/host.conf` es un symlink no trackeado que crea `hypr/scripts/machine-setup.sh` (`--force` para volver a elegir). Los scripts y la barra leen los roles desde Hyprland (`hyprctl workspacerules -j`, helpers en `hypr/scripts/lib-monitors.sh`).
-- **Git**: identidad personal por defecto y la de Innovex en `~/git/` (`includeIf` → `~/.config/git/work.gitconfig`).
+- **Git**: la identidad global es la de Innovex (el default que quiere el usuario); en los repos personales él la configura a mano con `user.name`/`user.email` locales. No cambiarla ni agregar `includeIf`.
 - `Hyprland --verify-config -c <archivo>` valida la sintaxis, pero **no** detecta variables sin definir: verificar la expansión en vivo con `hyprctl workspacerules -j` / `hyprctl binds`.
 
 Monitores de `yt-work` (esta laptop):
