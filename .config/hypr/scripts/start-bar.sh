@@ -32,20 +32,19 @@ sleep 0.5   # colchón para que NetworkManager / D-Bus / portal terminen de expo
 # esta variable. Si el sistema queda estable, se puede probar GSK_RENDERER=gl después.
 export GSK_RENDERER=cairo
 
-# Bug conocido en libastal-hyprland-git (r908.11842ae-1): fuga de file descriptors/threads
-# al consultar el estado de Hyprland — tras varias horas de uso normal agota los fd del
-# proceso ("Too many open files") y termina en SEGFAULT (confirmado con coredumpctl el
-# 2026-07-09, PID 1195). Mientras no haya un fix upstream, se relanza sola si crashea, en
-# vez de desaparecer y quedar así hasta que se note. `sleep 2` evita un crash-loop agresivo
-# si algo queda roto de forma permanente (config, etc.) — igual solo se relanzará cada vez
-# que realmente muera, no en bucle apretado.
+# Red de seguridad ante crashes. Historia: entre el 9 y el 28 de julio de 2026 AGS agotaba
+# sus file descriptors ("Too many open files") y terminaba en SEGFAULT. Al principio se culpó
+# a libastal-hyprland-git, pero esa librería solo era la primera víctima. La causa real era
+# `swaync-client -swb` dentro de un poll de BottomBar.tsx: ese modo se suscribe y nunca
+# termina, así que cada tick dejaba un proceso colgado. Quedó arreglado el 2026-07-28
+# (ver el comentario en BottomBar.tsx). Regla: nunca meter comandos subscribe/follow/watch
+# en un poll.
 #
-# CRÍTICO: la fuga acumula miles de threads (~10GB+ de memoria) antes de crashear. Sin esto,
-# cuando crashea, systemd-coredump intenta volcar TODA esa memoria a disco — confirmado que
-# eso solo consumió 10.8GB de RAM durante >10 minutos, dejando el sistema entero sin memoria
-# para nada (ni abrir una terminal), forzando un apagado físico (2026-07-09). `ulimit -c 0`
-# desactiva la generación de core dump para este proceso (y sus hijos) — si vuelve a crashear,
-# muere rápido y se relanza, sin ahogar el resto del sistema.
+# Igual se mantiene: la barra se relanza sola si muere (bucle de abajo; `sleep 2` evita un
+# crash-loop apretado si algo queda roto de forma permanente), y sin core dumps. Con la
+# fuga, gjs llegaba a ~10GB antes de crashear y systemd-coredump intentó volcar toda esa
+# memoria: dejó el sistema sin RAM más de 10 minutos y obligó a un apagado físico
+# (2026-07-09). `ulimit -c 0` evita que eso se repita si algún día vuelve a crashear.
 ulimit -c 0
 
 # Guard contra instancias duplicadas: si este script ya está corriendo (por ejemplo, se

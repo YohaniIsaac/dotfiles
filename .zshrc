@@ -80,8 +80,8 @@ bindkey '^[[3~' delete-char
 export PATH=/home/yt/.opencode/bin:$PATH
 
 # --- Zephyr workspaces ---
-# Busca .venv hasta 2 niveles abajo desde $PWD.
-# Se detiene al toparse con un subdirectorio que contenga .git (repo separado).
+# Activa el .venv más cercano subiendo desde $PWD. Se detiene en ~/git (no lo revisa ni sube más).
+# Si hay un .west/config junto al .venv o un nivel más arriba, exporta ZEPHYR_BASE.
 zenv() {
     local dir="$PWD"
     local stop_dir="$HOME/git"
