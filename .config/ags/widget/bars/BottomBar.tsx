@@ -1,6 +1,6 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
-import { execAsync } from "ags/process"
+import { exec, execAsync } from "ags/process"
 import { createPoll } from "ags/time"
 import { createExternal } from "ags"
 import GLib from "gi://GLib"
@@ -70,10 +70,25 @@ function ClockPill() {
 
 // ── Workspaces — reactivo via AstalHyprland ───────────────────────────────────
 
+// Primer workspace del bloque de cada monitor (1, 11 o 21), leído una sola vez de las
+// reglas de Hyprland: workspace.conf + hosts/<hostname>.conf. Es la misma fuente que usa
+// workspace-nav.sh, así la barra y los atajos coinciden en cualquier máquina. Un monitor
+// sin regla usa 1-10. Si cambian las reglas (otro host.conf), reiniciar la barra: ags quit.
+const wsStartByMonitor: Record<string, number> = (() => {
+  const map: Record<string, number> = {}
+  try {
+    const rules = JSON.parse(exec("hyprctl workspacerules -j")) as
+      { workspaceString: string, monitor?: string, default?: boolean }[]
+    for (const r of rules)
+      if (r.default && r.monitor && /^\d+$/.test(r.workspaceString) && !(r.monitor in map))
+        map[r.monitor] = Number(r.workspaceString)
+  } catch { /* sin reglas: todos los monitores usan 1-10 */ }
+  return map
+})()
+
 function wsRangeFor(connector: string): number[] {
-  if (connector === "HDMI-A-1") return Array.from({ length: 10 }, (_, i) => i + 11)
-  if (connector === "eDP-1")    return Array.from({ length: 10 }, (_, i) => i + 21)
-  return Array.from({ length: 10 }, (_, i) => i + 1)
+  const start = wsStartByMonitor[connector] ?? 1
+  return Array.from({ length: 10 }, (_, i) => i + start)
 }
 
 type WsState = { active: Record<string, number>; occupied: Set<number> }
@@ -319,6 +334,19 @@ function MediaPill() {
 
 let prevCpu = { total: 0, idle: 0 }
 
+// Sensor de temperatura de la CPU, buscado por nombre una sola vez: coretemp (Intel),
+// k10temp o zenpower (AMD). El número de /sys/class/hwmon/hwmonN cambia entre máquinas.
+// Valores en miligrados Celsius. Si no hay ninguno, usa la zona térmica genérica.
+const CPU_TEMP_FILE = (() => {
+  try {
+    const found = exec(["bash", "-c",
+      "for d in /sys/class/hwmon/hwmon*; do case $(cat $d/name) in coretemp|k10temp|zenpower)" +
+      " echo $d/temp1_input; break;; esac; done"]).trim()
+    if (found) return found
+  } catch { /* cae al genérico */ }
+  return "/sys/class/thermal/thermal_zone0/temp"
+})()
+
 function HardwareStats() {
   const cpu = createPoll(0, 2000, async () => {
     const line  = (await execAsync("cat /proc/stat")).split("\n")[0]
@@ -338,9 +366,8 @@ function HardwareStats() {
     return Math.round((total - avail) / total * 100)
   })
 
-  // hwmon4 = coretemp (paquete CPU) — valores en miligrados Celsius
   const temp = createPoll(0, 5000, async () => {
-    const raw = await execAsync("cat /sys/class/hwmon/hwmon4/temp1_input").catch(() => "0")
+    const raw = await execAsync(["cat", CPU_TEMP_FILE]).catch(() => "0")
     return Math.round(parseInt(raw.trim()) / 1000)
   })
 
