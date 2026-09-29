@@ -1,46 +1,29 @@
 #!/bin/bash
 # init-workspaces.sh — Fuerza la posición correcta de workspaces al inicio
-# Se ejecuta desde autostart con un delay para esperar que los monitores estén listos
+# Se ejecuta desde autostart con un delay para esperar que los monitores estén listos.
+# Qué monitor es dueño de cada bloque (1-10, 11-20, 21-30) sale de workspace.conf y
+# hosts/<hostname>.conf; los monitores que no están conectados se saltan.
+
+source "$(dirname "$0")/lib-monitors.sh"
 
 # Esperar a que Hyprland tenga los monitores disponibles
 sleep 2
 
-# Verificar qué monitores están conectados
-DP=$(hyprctl monitors -j | jq -r '.[] | select(.name == "DP-1") | .name')
-HDMI=$(hyprctl monitors -j | jq -r '.[] | select(.name == "HDMI-A-1") | .name')
-EDP=$(hyprctl monitors -j | jq -r '.[] | select(.name == "eDP-1") | .name')
+CONNECTED=$(hyprctl monitors -j | jq -r '.[].name')
 
-# Anclar workspaces 1-10 al DP-1 (primario / ASUS)
-if [ -n "$DP" ]; then
-    for i in $(seq 1 10); do
-        hyprctl dispatch moveworkspacetomonitor $i DP-1 2>/dev/null
+# Anclar cada bloque de 10 workspaces a su monitor
+for start in 1 11 21; do
+    mon=$(monitor_of_ws "$start")
+    grep -qx -- "$mon" <<< "$CONNECTED" || continue
+    for i in $(seq "$start" $((start + 9))); do
+        hyprctl dispatch moveworkspacetomonitor "$i" "$mon" 2>/dev/null
     done
-fi
+done
 
-# Anclar workspaces 11-20 al HDMI-A-1 (secundario / SAC)
-if [ -n "$HDMI" ]; then
-    for i in $(seq 11 20); do
-        hyprctl dispatch moveworkspacetomonitor $i HDMI-A-1 2>/dev/null
-    done
-fi
-
-# Anclar workspaces 21-30 al eDP-1 (auxiliar / laptop)
-if [ -n "$EDP" ]; then
-    for i in $(seq 21 30); do
-        hyprctl dispatch moveworkspacetomonitor $i eDP-1 2>/dev/null
-    done
-fi
-
-# Establecer workspace inicial en cada monitor disponible
-if [ -n "$DP" ]; then
-    hyprctl dispatch focusmonitor DP-1
-    hyprctl dispatch workspace 1
-fi
-if [ -n "$HDMI" ]; then
-    hyprctl dispatch focusmonitor HDMI-A-1
-    hyprctl dispatch workspace 11
-fi
-if [ -n "$EDP" ]; then
-    hyprctl dispatch focusmonitor eDP-1
-    hyprctl dispatch workspace 21
-fi
+# Establecer el workspace inicial de cada monitor disponible
+for start in 1 11 21; do
+    mon=$(monitor_of_ws "$start")
+    grep -qx -- "$mon" <<< "$CONNECTED" || continue
+    hyprctl dispatch focusmonitor "$mon"
+    hyprctl dispatch workspace "$start"
+done

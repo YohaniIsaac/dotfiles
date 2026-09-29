@@ -6,25 +6,19 @@
 #   workspace-nav.sh next           — siguiente workspace en el monitor activo
 #   workspace-nav.sh prev           — workspace anterior en el monitor activo
 
+source "$(dirname "$0")/lib-monitors.sh"
+
 ACTION=$1
 NUM=$2
 
-ACTIVE_MONITOR=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name')
+ACTIVE_MONITOR=$(focused_monitor)
 
-if [ "$ACTIVE_MONITOR" = "DP-1" ]; then
-    OFFSET=0
-    MIN=1
-    MAX=10
-elif [ "$ACTIVE_MONITOR" = "HDMI-A-1" ]; then
-    OFFSET=10
-    MIN=11
-    MAX=20
-else
-    # eDP-1 (laptop) u otro monitor
-    OFFSET=20
-    MIN=21
-    MAX=30
-fi
+# Bloque de 10 workspaces de este monitor según workspace.conf (1, 11 o 21).
+# Un monitor sin regla (por ejemplo, uno que no está en hosts/<hostname>.conf) usa 1-10.
+MIN=$(ws_start_of "$ACTIVE_MONITOR")
+MIN=${MIN:-1}
+OFFSET=$((MIN - 1))
+MAX=$((MIN + 9))
 
 case "$ACTION" in
     goto)

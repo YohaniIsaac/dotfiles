@@ -14,7 +14,7 @@ yay -S --needed --noconfirm noto-fonts noto-fonts-emoji
 echo "==> Installing packages..."
 parse_packages "$PACKAGES" | yay -S --needed -
 
-# Default Matugen colors (from groot_1.jpg) so Hyprland, Rofi and AGS start themed;
-# only fills in the color files that don't exist yet
-echo "==> Default colors..."
-bash "$HOME/.config/matugen/apply-defaults.sh"
+# Per-machine files that are not in git: hypr/host.conf (by hostname) and the default
+# Matugen colors (from groot_1.jpg). Only creates what is missing.
+echo "==> Machine setup..."
+bash "$HOME/.config/hypr/scripts/machine-setup.sh"

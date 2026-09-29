@@ -4,6 +4,9 @@
 .config/rofi/colors.rasi
 .config/ags/colors.scss
 
+# --- Por máquina: symlink a hypr/hosts/<hostname>.conf (lo crea machine-setup.sh) ---
+.config/hypr/host.conf
+
 # --- Historia y runtime ---
 .bash_history
 .zsh_history
