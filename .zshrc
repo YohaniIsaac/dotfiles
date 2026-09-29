@@ -35,6 +35,9 @@ export PATH="$HOME/.local/bin:$PATH"
 export EDITOR=nvim
 export VISUAL=nvim
 
+# --- JDK (Gradle/Android) ---
+export JAVA_HOME=/home/yt/.gradle/jdks/eclipse_adoptium-25-amd64-linux.2
+
 # --- Claude Code ---
 export CLAUDE_CODE_NO_FLICKER=1
 
@@ -80,45 +83,22 @@ export PATH=/home/yt/.opencode/bin:$PATH
 # Busca .venv hasta 2 niveles abajo desde $PWD.
 # Se detiene al toparse con un subdirectorio que contenga .git (repo separado).
 zenv() {
+    local dir="$PWD"
+    local stop_dir="$HOME/git"
     local venv_path=""
 
-    # Nivel 0: directorio actual
-    if [[ -f "$PWD/.venv/bin/activate" ]]; then
-        venv_path="$PWD/.venv"
-    fi
-
-    # Nivel 1
-    if [[ -z "$venv_path" ]]; then
-        for d1 in "$PWD"/*/; do
-            [[ -d "$d1" ]] || continue
-            [[ -d "${d1}.git" ]] && continue
-            if [[ -f "${d1}.venv/bin/activate" ]]; then
-                venv_path="${d1}.venv"
-                break
-            fi
-        done
-    fi
-
-    # Nivel 2
-    if [[ -z "$venv_path" ]]; then
-        for d1 in "$PWD"/*/; do
-            [[ -d "$d1" ]] || continue
-            [[ -d "${d1}.git" ]] && continue
-            for d2 in "${d1}"*/; do
-                [[ -d "$d2" ]] || continue
-                [[ -d "${d2}.git" ]] && continue
-                if [[ -f "${d2}.venv/bin/activate" ]]; then
-                    venv_path="${d2}.venv"
-                    break 2
-                fi
-            done
-        done
-    fi
+    while [[ "$dir" != "/" ]]; do
+        [[ "$dir" == "$stop_dir" ]] && break
+        if [[ -f "$dir/.venv/bin/activate" ]]; then
+            venv_path="$dir/.venv"
+            break
+        fi
+        dir="${dir:h}"
+    done
 
     if [[ -n "$venv_path" ]]; then
         source "$venv_path/bin/activate"
 
-        # Setear ZEPHYR_BASE leyendo zephyr.base de .west/config
         local workspace_root="${venv_path:h}"
         local west_config=""
         if [[ -f "$workspace_root/.west/config" ]]; then
@@ -136,7 +116,7 @@ zenv() {
 
         echo "venv activo: ${${venv_path:h}:t}"
     else
-        echo "zenv: no se encontró .venv (máx. 2 niveles, sin cruzar repos git)" >&2
+        echo "zenv: no se encontró .venv (sin cruzar $stop_dir)" >&2
         return 1
     fi
 }
@@ -151,3 +131,4 @@ zenv() {
 # END opam configuration
 
 export PATH=$PATH:/opt/ba2-toolchain/bin
+alias bossac='/home/yt/zephyr-sdk-0.16.8/sysroots/x86_64-pokysdk-linux/usr/bin/bossac'
