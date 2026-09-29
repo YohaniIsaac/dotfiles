@@ -18,8 +18,13 @@ const WS_NAV = `${HOME}/.config/hypr/scripts/workspace-nav.sh`
 // Estas instancias son singletons — se inicializan una vez y quedan activas.
 
 const hypr    = Hyprland.get_default()!
-const wp      = Wp.get_default()!
-const speaker = wp.audio.get_default_speaker()
+const wp      = Wp.get_default()
+// AstalWp inicializa async: en arranque en frío wp / wp.audio pueden ser null hasta que
+// emite "ready". Optional chaining para que, si eso ocurre, solo se degrade el módulo de
+// volumen en vez de tirar TODA la barra (que era la causa de que no apareciera al bootear).
+// El arranque ya se retrasa en start-bar.sh, así que en la práctica acá ya está listo —
+// esto es red de seguridad ante cualquier carrera residual.
+const speaker = wp?.audio?.get_default_speaker() ?? null
 const network = Network.get_default()
 const bat     = Battery.get_default()   // null en equipos sin batería
 
@@ -402,16 +407,38 @@ const NOTIF_ICONS: Record<string, string> = {
   "dnd-none":         "",
 }
 
+// OJO: NO usar `swaync-client -swb` acá. `-swb` es --subscribe-waybar: un modo de
+// suscripción que NO termina nunca (se queda escuchando eventos para siempre). Al
+// invocarlo desde un poll, cada tick dejaba un proceso vivo colgado — 3 monitores ×
+// 1 spawn/2s = ~4.5 fds filtrados por segundo, agotando el límite de 1024 fds de gjs
+// en <4 min. Peor aún: cada proceso zombie mantenía su conexión a D-Bus, hasta que
+// dbus-broker se quedó sin fds y murió, tumbando el bus de sesión entero y con él
+// TODAS las apps (portal, Brave, Discord, Spotify) — 2026-07-28 13:57:44.
+// `-D` (get-dnd) y `-c` (count) son consultas one-shot que sí terminan y se reapean.
+// `-sw` (skip-wait) evita que se queden colgados si swaync todavía no arrancó.
+//
+// Además el estado vive a nivel de módulo (como volState/netIcon/batState): un solo
+// poll compartido por los 3 monitores, en vez de uno independiente por barra.
+type NotifState = { icon: string, dnd: boolean }
+
+const notifState = createPoll<NotifState>({ icon: "", dnd: false }, 2000, async () => {
+  try {
+    const [dndOut, countOut] = await Promise.all([
+      execAsync("swaync-client -D -sw"),
+      execAsync("swaync-client -c -sw"),
+    ])
+    const dnd   = dndOut.trim() === "true"
+    const count = parseInt(countOut.trim(), 10) || 0
+    // Reconstruye la misma clave que devolvía el `alt` de -swb: "[dnd-]notification|none"
+    const alt = `${dnd ? "dnd-" : ""}${count > 0 ? "notification" : "none"}`
+    return { icon: NOTIF_ICONS[alt] ?? "", dnd }
+  } catch {
+    return { icon: "", dnd: false }
+  }
+})
+
 function Notifications() {
-  const state = createPoll({ icon: "", dnd: false }, 2000, async () => {
-    try {
-      const out  = await execAsync("swaync-client -swb")
-      const data = JSON.parse(out) as { alt: string }
-      return { icon: NOTIF_ICONS[data.alt] ?? "", dnd: data.alt.includes("dnd") }
-    } catch {
-      return { icon: "", dnd: false }
-    }
-  })
+  const state = notifState
 
   return (
     <button
