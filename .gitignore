@@ -2,6 +2,7 @@
 .config/hypr/colors.conf
 .config/hypr/wallpaper-colors.json
 .config/rofi/colors.rasi
+.config/ags/colors.scss
 
 # --- Historia y runtime ---
 .bash_history
