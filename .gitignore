@@ -100,7 +100,6 @@ personal-git/
 .claude/sessions/
 .claude/shell-snapshots/
 .claude/telemetry/
-.claude/claude-powerline.json
 .claude/.credentials.json
 .claude/daemon*
 .claude/feedback/
