@@ -41,6 +41,15 @@ xdg-desktop-portal-hyprland
 # --- AGS / Widget Layer ---
 aylurs-gtk-shell
 dart-sass
+# Librerías Astal que importa la barra (widget/bars/BottomBar.tsx, widget/mpris.ts)
+libastal-hyprland-git
+libastal-wireplumber-git
+libastal-network-git
+libastal-battery-git
+libastal-mpris-git
+
+# --- Keyboard remapping ---
+kanata-bin
 
 # --- Wallpaper & Theming ---
 awww
