@@ -11,6 +11,12 @@
 .wget-hsts
 .current_wallpaper
 .claude.json
+.viminfo
+
+# --- Privados: tokens / URLs secretas (ver README, "Archivos privados") ---
+.config/khal/calendars.conf
+.emulator_console_auth_token
+.pki/
 
 # --- Directorios grandes / binarios / privados ---
 .cache/
@@ -19,13 +25,30 @@
 .gnupg/
 .local/share/
 .local/state/
+.local/lib/
 .local/bin/claude
+.local/bin/pymupdf
 .npm/
 .opencode/
 zephyr-sdk-0.16.8/
 git/
 Documents/
+Downloads/
 Pictures/
+
+# --- SDKs, toolchains y caches de desarrollo ---
+.android/
+.cargo/
+.gradle/
+.java/
+.joulescope/
+Android/
+go/
+
+# --- Repos / proyectos con su propio versionado ---
+fast-export/
+forgejo-local-runner/
+personal-git/
 
 # --- SSH: solo config, nunca claves ---
 .ssh/id_*
@@ -44,6 +67,24 @@ Pictures/
 .config/pulse/
 .config/systemd/
 .config/mimeapps.list
+.config/Android Open Source Project/
+.config/CuteCom/
+.config/EDC Electronic Design Chemnitz GmbH/
+.config/FreeCAD/
+.config/Google/
+.config/Logic/
+.config/QtProject.conf
+.config/SEGGER/
+.config/Thunar/
+.config/btop/
+.config/discord/
+.config/htop/
+.config/kicad/
+.config/libreoffice/
+.config/opencode/
+.config/pavucontrol.ini
+.config/spotify/
+.config/xfce4/
 
 # --- Claude: solo config, no datos de sesión ---
 .claude/backups/
@@ -63,3 +104,12 @@ Pictures/
 .claude/telemetry/
 .claude/claude-powerline.json
 .claude/.credentials.json
+.claude/daemon*
+.claude/feedback/
+.claude/investigate-locks/
+.claude/jobs/
+.claude/skills/
+.claude/state/
+.claude/uploads/
+.claude/.last-cleanup
+.claude/.last-update-result.json
