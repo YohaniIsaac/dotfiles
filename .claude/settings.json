@@ -4,7 +4,10 @@
     "command": "npx -y @owloops/claude-powerline@latest"
   },
   "enabledPlugins": {
-    "claude-powerline@claude-powerline": true
+    "claude-powerline@claude-powerline": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-powerline": {
@@ -14,6 +17,12 @@
       }
     }
   },
-  "effortLevel": "high",
-  "theme": "dark"
+  "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-sonnet-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "theme": "dark",
+  "agentPushNotifEnabled": true
 }
