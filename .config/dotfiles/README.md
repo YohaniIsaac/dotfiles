@@ -1,22 +1,23 @@
 # Dotfiles — Arch Linux + Hyprland
 
-Setup personal con Hyprland, Waybar, Rofi, Matugen (Material You theming), Kitty y Neovim.
+Setup personal con Hyprland, AGS (Astal/GTK4), Rofi, Matugen (Material You theming), Kitty y Neovim.
 
 ## Vista general
 
 | Componente | Programa |
 |---|---|
 | WM | Hyprland |
-| Bar | Waybar |
+| Barra | AGS v3 (Astal/GTK4). Waybar queda desactivada, como respaldo |
 | Launcher | Rofi |
 | Terminal | Kitty |
 | Shell | Zsh + Starship |
-| Editor | Neovim |
+| Editor | Neovim (submódulo) |
 | Notificaciones | SwayNC |
 | Bloqueo de pantalla | Hyprlock |
-| Idle | Hypridle |
+| Idle | Hypridle (apaga pantallas, sin auto-suspend) |
 | Fondo de pantalla | awww |
 | Temas dinámicos | Matugen (Material You) |
+| Remapeo de teclado | Kanata |
 | Display Manager | SDDM |
 
 ---
@@ -281,6 +282,14 @@ dotfiles checkout
 > dotfiles checkout
 > ```
 
+Un clon `--bare` no configura el fetch del remoto, así que `dotfiles status` nunca avisaría de commits sin pushear o sin bajar. Para arreglarlo:
+
+```bash
+dotfiles config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+dotfiles fetch origin
+dotfiles branch --set-upstream-to=origin/main main
+```
+
 Instala los paquetes:
 
 ```bash
@@ -320,11 +329,13 @@ El config de Neovim se incluye como submódulo:
 dotfiles submodule update --init --recursive
 ```
 
-Abre Neovim para que instale los plugins automáticamente:
+Abre Neovim para que instale los plugins y los Language Servers automáticamente:
 
 ```bash
 nvim
 ```
+
+Las dependencias de Neovim (Zathura, `python-pynvim`, `neovim-remote`) ya vienen en `packages.txt`. El detalle de plugins y atajos está en `~/.config/nvim/README.md`.
 
 ---
 
@@ -351,16 +362,26 @@ Esto pre-genera todas las combinaciones de color para el selector de wallpapers 
 
 ### 24. Configurar monitores
 
-Edita `~/.config/hypr/monitors.conf` según tu setup:
+Edita `~/.config/hypr/monitors.conf` según tu setup. Así está en este equipo:
 
 ```bash
-# Un solo monitor
-monitor = , preferred, auto, 1
+# DP-1 (SAC LED MONITOR) - arriba izquierda
+monitor = DP-1, 1920x1080@74.97, 0x0, 1
 
-# Dual monitor (como este config)
-monitor = HDMI-A-1, 1920x1080@74.97, 0x0, 1
-monitor = eDP-1, preferred, 1920x1080, 1.25
+# HDMI-A-1 (ASUS VA27EHF) - arriba derecha
+monitor = HDMI-A-1, 1920x1080@100.05, 1920x1080, 1
+
+# eDP-1 (laptop) - abajo del DP-1
+monitor = eDP-1, preferred, 3840x2160, 1.25
 ```
+
+Con un solo monitor basta con:
+
+```bash
+monitor = , preferred, auto, 1
+```
+
+Cada monitor tiene su propio rango de workspaces (`workspace.conf`): DP-1 usa 1–10, HDMI-A-1 11–20 y eDP-1 21–30. Si cambian los conectores, actualiza también `workspace.conf` y los atajos `Super + F1/F2/F3` de `custom.conf`.
 
 Identifica los nombres de tus monitores con:
 
@@ -370,26 +391,82 @@ hyprctl monitors
 
 ---
 
+### 25. Kanata (scroll con el teclado)
+
+Kanata necesita escribir en `/dev/uinput`, así que el usuario tiene que estar en los grupos `input` y `uinput`:
+
+```bash
+sudo groupadd -f -r uinput
+echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' | sudo tee /etc/udev/rules.d/99-input.rules
+echo uinput | sudo tee /etc/modules-load.d/uinput.conf
+sudo usermod -aG input,uinput $USER
+```
+
+Cierra sesión y vuelve a entrar (o reinicia) para que los grupos tengan efecto. Después:
+
+```bash
+systemctl --user enable --now kanata.service
+```
+
+La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps Lock funciona normal, y mantenido + `h/j/k/l` hace scroll.
+
+---
+
 ## Atajos de teclado principales
+
+`Super + /` muestra la lista completa de atajos.
+
+### Aplicaciones
 
 | Tecla | Acción |
 |---|---|
-| `Super + Enter` | Abrir terminal (Kitty) |
+| `Super + Enter` | Terminal (Kitty) |
 | `Super + D` | Lanzador (Rofi) |
-| `Super + B` | Brave Browser |
+| `Super + B` | Brave |
 | `Super + E` | Explorador de archivos (Thunar) |
-| `Super + W` | Selector de wallpaper |
-| `Super + Q` | Cerrar ventana |
-| `Super + F` | Pantalla completa |
-| `Super + T` | Flotante |
-| `Super + L` | Bloquear pantalla |
-| `Super + Ctrl + Q` | Menú de salida |
+| `Super + W` | Selector de wallpaper y colores |
 | `Super + V` | Historial del portapapeles |
-| `Super + Tab` | Cambiar monitor |
-| `Super + 1–9` | Cambiar workspace |
-| `Super + Shift + 1–9` | Mover ventana a workspace |
-| `Print` | Captura de pantalla completa |
-| `Super + Print` | Captura de región |
+| `Ctrl + Tab` | Selector de ventanas (wofi) |
+
+### Ventanas
+
+| Tecla | Acción |
+|---|---|
+| `Super + Q` | Cerrar ventana |
+| `Super + Shift + Q` | Matar el proceso de la ventana |
+| `Super + F` / `Super + M` | Pantalla completa / maximizar |
+| `Super + T` | Alternar flotante |
+| `Super + Shift + T` | Todo el workspace flotante |
+| `Super + h/j/k/l` | Mover el foco (sin salir del monitor) |
+| `Super + Alt + h/j/k/l` | Intercambiar ventanas |
+| `Super + Ctrl + h/j/k/l` | Redimensionar |
+| `Super + Shift + J` / `Super + Shift + K` | Cambiar la orientación del split / intercambiar el split |
+| `Super + arrastrar` (clic izq. / der.) | Mover / redimensionar |
+| `Alt + Tab` | Ciclar ventanas |
+
+### Workspaces y monitores
+
+| Tecla | Acción |
+|---|---|
+| `Super + 1–0` | Workspace 1–10 del monitor activo |
+| `Super + Shift + 1–0` | Mover ventana a ese workspace |
+| `Super + Tab` | Alternar el foco entre DP-1 y HDMI-A-1 |
+| `Super + F1 / F2 / F3` | Enfocar SAC / ASUS / laptop |
+| `Super + Shift + F1 / F2 / F3` | Mover ventana a ese monitor |
+| `Super + Ctrl + W` | Reparar workspaces (si quedaron en el monitor equivocado) |
+
+### Sistema
+
+| Tecla | Acción |
+|---|---|
+| `Super + Shift + L` | Bloquear pantalla |
+| `Super + Ctrl + Q` | Menú de salida (wlogout) |
+| `Super + Ctrl + R` | Recargar Hyprland |
+| `Super + Shift + A` | Activar/desactivar animaciones |
+| `Print` / `Super + Print` | Captura completa / de región (en `~/Pictures/Screenshots/`) |
+| `Super + Shift + rueda` / `Super + Shift + Z` | Zoom / restablecer zoom |
+| Teclas multimedia | Volumen, brillo y reproducción (Spotify tiene prioridad) |
+| `Caps Lock` mantenido + `h/j/k/l` | Scroll (Kanata) |
 
 ---
 
@@ -397,25 +474,36 @@ hyprctl monitors
 
 ```
 ~
+├── .claude/
+│   ├── CLAUDE.md              # Reglas globales para Claude Code
+│   └── settings.json          # Configuración de Claude Code
 ├── .config/
-│   ├── ags/           # Widget de calendario (AGS/Astal GTK4)
-│   ├── dotfiles/      # Documentación, lista de paquetes y script de instalación
+│   ├── ags/                   # Barra (AGS v3 / Astal GTK4) + popup de Spotify
+│   ├── dotfiles/              # Documentación, paquetes e instalación
+│   │   ├── .claude/CLAUDE.md  # Contexto del escritorio para Claude Code
 │   │   ├── README.md
-│   │   ├── packages.txt   # Todos los paquetes del sistema (pacman + AUR)
-│   │   └── install.sh     # Script de instalación (ejecutar tras clonar)
-│   ├── hypr/          # Hyprland: ventanas, animaciones, keybindings, etc.
-│   ├── khal/          # Calendario local (lee ICS de Google Calendar)
-│   ├── waybar/        # Barra de estado
-│   ├── rofi/          # Launcher y temas
-│   ├── kitty/         # Terminal
-│   ├── nvim/          # Neovim (submódulo git)
-│   ├── ranger/        # File manager TUI
-│   ├── matugen/       # Templates para theming dinámico (Material You)
-│   └── starship.toml  # Prompt de shell
+│   │   ├── packages.txt       # Paquetes del sistema (pacman + AUR)
+│   │   └── install.sh         # Instala packages.txt (ejecutar tras clonar)
+│   ├── hypr/                  # Hyprland: monitores, ventanas, keybindings, autostart…
+│   │   └── scripts/           # start-bar.sh, workspaces, wallpaper, volumen…
+│   ├── kanata/                # Remapeo de teclado (Caps Lock + hjkl = scroll)
+│   ├── kitty/                 # Terminal
+│   ├── matugen/               # Templates de theming dinámico (Material You)
+│   ├── nvim/                  # Neovim (submódulo git)
+│   ├── ranger/                # File manager TUI
+│   ├── rofi/                  # Launcher y temas
+│   ├── systemd/user/          # kanata.service
+│   ├── waybar/                # Barra anterior (desactivada); AGS usa su scripts/wlogout.sh
+│   └── starship.toml          # Prompt de shell
 ├── .local/bin/
-│   └── hypr-generate-colors-wallpapers
+│   ├── hypr-generate-colors-wallpapers
+│   └── joulescope             # Lanza la UI de Joulescope desde su venv
+├── Pictures/wallpapers/       # Solo groot_1.jpg está en el repo; el resto se agrega a mano
 ├── .gitconfig
-├── .ssh/config
+├── .gitignore                 # Qué NO se trackea desde $HOME
+├── .gitignore_global          # Ignores globales de git (core.excludesFile)
+├── .minirc.dfl                # Config por defecto de minicom
+├── .ssh/config                # Solo la config, nunca las claves
 └── .zshrc
 ```
 
@@ -429,56 +517,55 @@ El sistema usa [Matugen](https://github.com/InioX/matugen) para generar colores 
 2. Elige el color base (de 6 opciones extraídas de la imagen)
 3. Elige el esquema de color (Tonal Spot, Vibrant, Expressive, etc.)
 
-Los colores se aplican automáticamente a Hyprland, Waybar, Rofi y AGS mediante templates en `~/.config/matugen/templates/`.
+Matugen pone el wallpaper con awww y genera los colores desde los templates de `~/.config/matugen/templates/`:
+
+| Destino | Cuándo se aplica |
+|---|---|
+| Hyprland (`hypr/colors.conf`) | Al instante (`hyprctl reload`) |
+| Rofi (`rofi/colors.rasi`) | La próxima vez que se abre |
+| Waybar (`waybar/colors.css`) | Al instante, si está corriendo |
+| AGS (`ags/colors.scss`) | Al reiniciar la barra: `ags quit` (start-bar.sh la relanza) |
+
+Los tres primeros se generan solos y están en `.gitignore`. `ags/colors.scss` sí se trackea porque sin él AGS no compila en un clon nuevo; por eso aparece modificado cada vez que cambias de wallpaper.
 
 ---
 
-## Archivos privados (no trackeados)
+## Barra (AGS)
 
-Estos archivos contienen credenciales o URLs privadas y **no están en el repo**. Deben crearse manualmente tras el checkout.
+Una barra por monitor, arriba (`~/.config/ags/widget/bars/BottomBar.tsx`):
 
-### `~/.config/khal/calendars.conf`
+- **Izquierda:** workspaces del monitor
+- **Centro:** reloj y Spotify (clic → popup del reproductor)
+- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen, red, batería, notificaciones y apagado (clic → wlogout, clic derecho → hyprlock)
 
-Contiene las URLs secretas de los calendarios de Google Calendar (formato iCal). Crear con permisos restringidos:
+Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` directo. El script:
 
-```bash
-touch ~/.config/khal/calendars.conf
-chmod 600 ~/.config/khal/calendars.conf
-```
+- espera a D-Bus y a pipewire/wireplumber (en frío, AGS arrancaba antes que el audio y moría);
+- relanza la barra si se cae;
+- evita instancias duplicadas con `flock`;
+- deja el log en `~/.cache/ags-start.log`.
 
-Formato del archivo:
+Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit`.
 
-```
-# nombre|color|URL_ICS
-personal|light blue|https://calendar.google.com/calendar/ical/TU_USUARIO/private-XXXXX/basic.ics
-# trabajo|light green|https://calendar.google.com/calendar/ical/OTRO/private-XXXXX/basic.ics
-```
-
-Para obtener la URL de cada calendario: Google Calendar → Configuración → [nombre del calendario] → *Dirección secreta en formato iCal*.
-
-Una vez creado, sincroniza manualmente la primera vez:
-
-```bash
-~/.config/hypr/scripts/calendar-sync.sh
-```
-
-El timer de systemd se encarga de las sincronizaciones posteriores cada 15 minutos:
-
-```bash
-systemctl --user enable --now calendar-sync.timer
-```
+> **Ojo al programar widgets:** nunca llames desde `createPoll`/`execAsync` a un comando que no termina (modo subscribe/follow/watch, como `swaync-client -swb`). Cada tick deja un proceso colgado, y al final se agotan los file descriptors del bus de sesión y se cierran todas las apps. El detalle está en el comentario de las notificaciones en `BottomBar.tsx`.
 
 ---
 
 ## Servicios systemd de usuario
 
-Los siguientes servicios están trackeados en el repo y deben habilitarse tras el checkout:
-
-```bash
-systemctl --user enable --now calendar-sync.timer
-```
-
 | Servicio | Función |
 |---|---|
-| `calendar-sync.timer` | Sincroniza calendarios ICS cada 15 minutos |
-| `calendar-sync.service` | Ejecuta `calendar-sync.sh` (disparado por el timer) |
+| `kanata.service` | Remapeo de teclado (ver paso 25; necesita el grupo `uinput`) |
+
+```bash
+systemctl --user enable --now kanata.service
+```
+
+---
+
+## Mantenimiento del repo
+
+- **Repos públicos:** este repo y el de Neovim son públicos en GitHub. Nada de claves, tokens ni URLs privadas.
+- **Ignore global:** `~/.gitignore_global` ignora `.claude/`, `*.md` y `*.txt` en todos los repos, así que los archivos nuevos de ese tipo no aparecen en `dotfiles status` y hay que agregarlos con `dotfiles add -f <ruta>`. Los ya trackeados se actualizan normal, salvo los que están dentro de un directorio `.claude/` (como `.claude/settings.json`): ahí `dotfiles add` avisa "paths are ignored" y sale con error aunque igual los agrega, así que conviene usar `dotfiles add -u -- <ruta>`.
+- **Submódulo de Neovim:** los cambios se commitean dentro de `~/.config/nvim` y después se actualiza el puntero con `dotfiles add .config/nvim`. Al subir, primero `git -C ~/.config/nvim push` y después `dotfiles push`.
+- **Cuidado con el work-tree:** es todo `$HOME`, así que nada de `dotfiles reset --hard`, `checkout .` ni `stash` sin revisar antes.
