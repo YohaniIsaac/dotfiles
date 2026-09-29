@@ -402,13 +402,21 @@ echo uinput | sudo tee /etc/modules-load.d/uinput.conf
 sudo usermod -aG input,uinput $USER
 ```
 
-Cierra sesión y vuelve a entrar (o reinicia) para que los grupos tengan efecto. Después:
+Después habilita el servicio:
 
 ```bash
-systemctl --user enable --now kanata.service
+systemctl --user enable kanata.service
 ```
 
-La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps Lock funciona normal, y mantenido + `h/j/k/l` hace scroll.
+El servicio recién puede abrir `/dev/uinput` después de **reiniciar**. Cerrar sesión no alcanza si el user manager de systemd (`systemd --user`) sigue vivo, porque conserva los grupos con los que arrancó. Si no puedes reiniciar todavía, lánzalo a mano con el grupo nuevo. `sg` funciona apenas eres miembro, sin volver a entrar:
+
+```bash
+sg uinput -c "setsid -f kanata --cfg $HOME/.config/kanata/scroll.kbd >> $HOME/.cache/kanata-manual.log 2>&1 < /dev/null"
+```
+
+La salida va a un archivo a propósito: si kanata escribe en una terminal que ya se cerró (por ejemplo, al desconectarse un teclado Bluetooth), se cae. Después de reiniciar, el servicio toma el control solo.
+
+La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps Lock funciona normal, y mantenido + `h/j/k/l` hace scroll. Para cerrar kanata en una emergencia: `Ctrl izq + Espacio + Esc`.
 
 ---
 

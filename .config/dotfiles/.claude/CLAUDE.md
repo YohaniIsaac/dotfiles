@@ -59,7 +59,7 @@ Antes de meter un comando en un poll, verificar que termine: `timeout 5 <cmd>; e
 
 ## Otros componentes
 
-- **Kanata** (`~/.config/kanata/scroll.kbd` + `kanata.service` de usuario): Caps Lock mantenido + hjkl = scroll. Necesita el grupo `uinput`: regla udev en `/etc/udev/rules.d/99-input.rules` y módulo en `/etc/modules-load.d/uinput.conf`. Al 2026-09-29 el usuario **no** está en ese grupo, así que el servicio no arranca.
+- **Kanata** (`~/.config/kanata/scroll.kbd` + `kanata.service` de usuario, habilitado): remapeo de teclas, hoy Caps Lock mantenido + hjkl = scroll. Necesita el grupo `uinput`: regla udev en `/etc/udev/rules.d/99-input.rules` y módulo en `/etc/modules-load.d/uinput.conf`. El usuario ya está en `uinput` en `/etc/group`, pero el user manager de systemd arrancó antes de agregarlo: el servicio recién funciona tras reiniciar. Hasta entonces se lanza a mano con `sg uinput` (ver README, paso 25), con log en `~/.cache/kanata-manual.log`. Salida de emergencia: `Ctrl izq + Espacio + Esc`.
 - **Hypridle**: sin auto-suspend. `systemctl suspend` cuelga en s2idle y nunca resume en este equipo.
 - **Apagones en idle**: el problema es de i915/firmware, mitigado con NVMe APST, microcode y cstate. AGS y waybar ya quedaron descartados como causa.
 - **Waybar**: desactivada. Su config queda como respaldo y la barra de AGS sigue usando `waybar/scripts/wlogout.sh`.
