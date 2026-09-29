@@ -28,7 +28,6 @@ sddm
 
 # --- Wayland / Hyprland ---
 hyprland
-waybar
 rofi
 swaync
 wlogout
@@ -115,7 +114,6 @@ brightnessctl
 stow
 curl
 libnotify
-pacman-contrib
 
 # --- Python ---
 python-pillow

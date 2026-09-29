@@ -5,11 +5,6 @@ reload_apps = true
 command = "awww img {{ image }} --transition-type center --transition-duration 1"
 set = true
 
-[templates.waybar-colors]
-input_path = "~/.config/matugen/templates/waybar-colors.css"
-output_path = "~/.config/waybar/colors.css"
-post_hook = "pkill -SIGUSR2 waybar"
-
 [templates.hypr-colors]
 input_path = "~/.config/matugen/templates/hypr-colors.conf"
 output_path = "~/.config/hypr/colors.conf"

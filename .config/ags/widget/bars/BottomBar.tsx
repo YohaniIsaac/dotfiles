@@ -462,7 +462,7 @@ function PowerButton() {
   return (
     <button
       class="sys-btn"
-      onClicked={() => execAsync(`bash ${HOME}/.config/waybar/scripts/wlogout.sh`).catch(() => {})}
+      onClicked={() => execAsync(`bash ${HOME}/.config/hypr/scripts/wlogout.sh`).catch(() => {})}
       $={(self) => {
         const rc = new Gtk.GestureClick()
         rc.set_button(3)
