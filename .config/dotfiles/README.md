@@ -7,7 +7,7 @@ Setup personal con Hyprland, AGS (Astal/GTK4), Rofi, Matugen (Material You themi
 | Componente | Programa |
 |---|---|
 | WM | Hyprland |
-| Barra | AGS v3 (Astal/GTK4). Waybar queda desactivada, como respaldo |
+| Barra | AGS v3 (Astal/GTK4) |
 | Launcher | Rofi |
 | Terminal | Kitty |
 | Shell | Zsh + Starship |
@@ -122,6 +122,8 @@ swapon /dev/nvme0n1p2
 ```bash
 pacstrap -K /mnt base base-devel linux linux-firmware linux-headers nano vim git
 ```
+
+Agrega también el microcódigo de tu CPU: `intel-ucode` (Intel) o `amd-ucode` (AMD). GRUB lo carga solo al regenerar su config en el paso 14.
 
 ---
 
@@ -348,15 +350,25 @@ sudo systemctl enable --now bluetooth
 
 ---
 
-### 23. Generar caché de wallpapers (Matugen)
+### 23. Wallpapers y colores (Matugen)
 
-Agrega tus wallpapers a `~/Pictures/wallpapers/` y luego:
+El repo solo trae `~/Pictures/wallpapers/groot_1.jpg`. Copia el resto de tus wallpapers desde la otra máquina (no están en git porque pesan ~215 MB):
+
+```bash
+rsync -av otra-maquina:Pictures/wallpapers/ ~/Pictures/wallpapers/
+```
+
+Los archivos de colores de Hyprland (`hypr/colors.conf`) y Rofi (`rofi/colors.rasi`) los genera Matugen y no están en el repo. Hasta que existan, Hyprland muestra errores de config y `Super + D` no abre. Genéralos una vez desde una terminal dentro de Hyprland:
+
+```bash
+matugen image ~/Pictures/wallpapers/groot_1.jpg -m dark --source-color-index 0
+```
+
+Después pre-genera las combinaciones de color del selector de wallpapers (`Super + W`):
 
 ```bash
 hypr-generate-colors-wallpapers
 ```
-
-Esto pre-genera todas las combinaciones de color para el selector de wallpapers (`Super + W`).
 
 ---
 
@@ -393,20 +405,13 @@ hyprctl monitors
 
 ### 25. Kanata (scroll con el teclado)
 
-Kanata necesita escribir en `/dev/uinput`, así que el usuario tiene que estar en los grupos `input` y `uinput`:
+Kanata lee los teclados y crea un teclado virtual en `/dev/uinput`, que por defecto solo puede usar root. Todo lo necesario está en `~/.config/kanata/`: la config (`scroll.kbd`), los archivos de sistema (`system/`) y un script que los instala:
 
 ```bash
-sudo groupadd -f -r uinput
-echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' | sudo tee /etc/udev/rules.d/99-input.rules
-echo uinput | sudo tee /etc/modules-load.d/uinput.conf
-sudo usermod -aG input,uinput $USER
+bash ~/.config/kanata/setup.sh
 ```
 
-Después habilita el servicio:
-
-```bash
-systemctl --user enable kanata.service
-```
+El script copia `system/99-input.rules` a `/etc/udev/rules.d/` y `system/uinput.conf` a `/etc/modules-load.d/`, crea el grupo `uinput`, agrega tu usuario a `input` y `uinput`, y habilita `kanata.service`.
 
 El servicio recién puede abrir `/dev/uinput` después de **reiniciar**. Cerrar sesión no alcanza si el user manager de systemd (`systemd --user`) sigue vivo, porque conserva los grupos con los que arrancó. Si no puedes reiniciar todavía, lánzalo a mano con el grupo nuevo. `sg` funciona apenas eres miembro, sin volver a entrar:
 
@@ -484,7 +489,8 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 ~
 ├── .claude/
 │   ├── CLAUDE.md              # Reglas globales para Claude Code
-│   └── settings.json          # Configuración de Claude Code
+│   ├── settings.json          # Configuración de Claude Code
+│   └── claude-powerline.json  # Statusline de Claude Code (tema tokyo-night)
 ├── .config/
 │   ├── ags/                   # Barra (AGS v3 / Astal GTK4) + popup de Spotify
 │   ├── dotfiles/              # Documentación, paquetes e instalación
@@ -493,15 +499,17 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 │   │   ├── packages.txt       # Paquetes del sistema (pacman + AUR)
 │   │   └── install.sh         # Instala packages.txt (ejecutar tras clonar)
 │   ├── hypr/                  # Hyprland: monitores, ventanas, keybindings, autostart…
-│   │   └── scripts/           # start-bar.sh, workspaces, wallpaper, volumen…
+│   │   └── scripts/           # start-bar.sh, restore-wallpaper.sh, wlogout.sh, workspaces…
 │   ├── kanata/                # Remapeo de teclado (Caps Lock + hjkl = scroll)
+│   │   ├── scroll.kbd         # Config de kanata
+│   │   ├── system/            # Regla udev y carga de uinput (van en /etc)
+│   │   └── setup.sh           # Instala system/, grupos y servicio (paso 25)
 │   ├── kitty/                 # Terminal
 │   ├── matugen/               # Templates de theming dinámico (Material You)
 │   ├── nvim/                  # Neovim (submódulo git)
-│   ├── ranger/                # File manager TUI
+│   ├── ranger/rc.conf         # File manager TUI (solo los cambios sobre el default)
 │   ├── rofi/                  # Launcher y temas
 │   ├── systemd/user/          # kanata.service
-│   ├── waybar/                # Barra anterior (desactivada); AGS usa su scripts/wlogout.sh
 │   └── starship.toml          # Prompt de shell
 ├── .local/bin/
 │   ├── hypr-generate-colors-wallpapers
@@ -531,10 +539,11 @@ Matugen pone el wallpaper con awww y genera los colores desde los templates de `
 |---|---|
 | Hyprland (`hypr/colors.conf`) | Al instante (`hyprctl reload`) |
 | Rofi (`rofi/colors.rasi`) | La próxima vez que se abre |
-| Waybar (`waybar/colors.css`) | Al instante, si está corriendo |
 | AGS (`ags/colors.scss`) | Al reiniciar la barra: `ags quit` (start-bar.sh la relanza) |
 
-Los tres primeros se generan solos y están en `.gitignore`. `ags/colors.scss` sí se trackea porque sin él AGS no compila en un clon nuevo; por eso aparece modificado cada vez que cambias de wallpaper.
+Los de Hyprland y Rofi se generan y están en `.gitignore` (en una instalación nueva hay que generarlos una vez: ver paso 23). `ags/colors.scss` sí se trackea porque sin él AGS no compila en un clon nuevo; por eso aparece modificado cada vez que cambias de wallpaper.
+
+Al iniciar sesión, `hypr/scripts/restore-wallpaper.sh` vuelve a poner el último wallpaper elegido (`~/.current_wallpaper`), o `groot_1.jpg` si todavía no elegiste ninguno.
 
 ---
 
@@ -563,11 +572,30 @@ Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit
 
 | Servicio | Función |
 |---|---|
-| `kanata.service` | Remapeo de teclado (ver paso 25; necesita el grupo `uinput`) |
+| `kanata.service` | Remapeo de teclado (lo habilita `~/.config/kanata/setup.sh`, ver paso 25) |
 
-```bash
-systemctl --user enable --now kanata.service
-```
+---
+
+## Llevar esta config a otra máquina
+
+Siguiendo los pasos 18–25 queda todo lo que está en el repo. Esto no está en git y hay que traerlo o rehacerlo a mano:
+
+| Qué | Cómo |
+|---|---|
+| Claves SSH (y GPG, si usas) | Copiarlas o generarlas de nuevo (paso 20) |
+| Wallpapers (~215 MB) | `rsync` de `~/Pictures/wallpapers/` (paso 23) |
+| Perfil de Brave | Brave Sync |
+| Skill `scout` de Claude Code | Clonar `YohaniIsaac/scout-skills` en `~/personal-git/` y `ln -s ~/personal-git/scout-skills ~/.claude/skills/scout` |
+| Repos personales y de trabajo | Clonarlos en `~/personal-git/` y `~/git/` |
+| Reglas udev de herramientas embebidas (OpenOCD, J-Link, Joulescope) | Vienen con cada herramienta; se reinstalan con ella |
+
+Y esto es **específico de esta laptop**. No lo copies tal cual; revísalo:
+
+- **Parámetros del kernel** en `/etc/default/grub` (`i915.enable_psr=0 intel_idle.max_cstate=1 pcie_aspm=off nvme_core.default_ps_max_latency_us=0`) y `/etc/systemd/logind.conf.d/no-suspend.conf` (ignora cerrar la tapa). Son mitigaciones para los cuelgues de este hardware y gastan más batería. No están en el repo a propósito.
+- **Suspensión desactivada** en `hypr/hypridle.conf`: aquí `systemctl suspend` cuelga en s2idle. En otra máquina puedes volver a activarla descomentando el bloque `listener` del final.
+- **Monitores**: `monitors.conf`, `workspace.conf`, los atajos `Super + F1/F2/F3` de `custom.conf` y `toggle-main-monitors.sh` asumen DP-1, HDMI-A-1 y eDP-1 (paso 24).
+- **Temperatura de la CPU en la barra**: `BottomBar.tsx` lee `/sys/class/hwmon/hwmon4`, que aquí es `coretemp`. En otra máquina el número puede cambiar; revisa `cat /sys/class/hwmon/hwmon*/name`.
+- **Rutas en `.zshrc`**: `JAVA_HOME` (JDK que bajó Gradle), el alias `bossac` (Zephyr SDK 0.16.8), `/opt/ba2-toolchain/bin`, `~/.opencode/bin` y opam. Solo sirven si instalas esas herramientas.
 
 ---
 

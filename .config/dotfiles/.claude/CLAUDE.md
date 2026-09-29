@@ -27,9 +27,8 @@ Escritorio Arch Linux + Hyprland. La guía de instalación y el detalle de cada 
 - Una sola barra por monitor, anclada arriba, en `widget/bars/BottomBar.tsx` (el nombre quedó de cuando estaba abajo):
   - Izquierda: workspaces del monitor.
   - Centro: reloj y Spotify (click → popup `media-popup` de `widget/MediaPlayer.tsx`).
-  - Derecha: CPU/RAM/temperatura (click → `btop`), volumen, red, batería, notificaciones (swaync) y botón de apagado (click → `waybar/scripts/wlogout.sh`, click derecho → hyprlock).
-- `widget/mpris.ts`: estado compartido de Spotify/MPRIS. `app.ts` registra el popup y crea una barra por monitor.
-- Sin uso (prototipos viejos): `widget/Bar.tsx`, `widget/bars/ClockBar.tsx`, `WorkspaceBar.tsx`, `SystemBar.tsx`.
+  - Derecha: CPU/RAM/temperatura (click → `btop`; lee `/sys/class/hwmon/hwmon4`, que en esta laptop es `coretemp`), volumen, red, batería, notificaciones (swaync) y botón de apagado (click → `hypr/scripts/wlogout.sh`, click derecho → hyprlock).
+- `widget/mpris.ts`: estado compartido de Spotify/MPRIS. `app.ts` registra el popup y crea una barra por monitor. Los prototipos viejos (`Bar.tsx`, `ClockBar.tsx`, `WorkspaceBar.tsx`, `SystemBar.tsx`) se borraron el 2026-09-29.
 - Estilos: `style.scss` importa `_bar.scss` y `_mediaplayer.scss`. Los mixins están en `_shared.scss`. `colors.scss` lo genera Matugen, pero se trackea para que AGS compile en un clon nuevo.
 - Librerías: AstalHyprland, AstalWp, AstalNetwork, AstalBattery y AstalMpris (paquetes `libastal-*-git`). La reactividad usa `gnim` (`createPoll`, `createExternal`, `.as()`).
 
@@ -54,16 +53,18 @@ Antes de meter un comando en un poll, verificar que termine: `timeout 5 <cmd>; e
 ## Theming (Matugen)
 
 `Super+W` → `hypr/scripts/wallpaperSelect.sh`: elige el wallpaper, el color base y el esquema. Después `matugen` rellena los templates de `~/.config/matugen/templates/`:
-- `hypr/colors.conf` (+ `hyprctl reload`), `rofi/colors.rasi` y `waybar/colors.css`: generados e ignorados por git.
+- `hypr/colors.conf` (+ `hyprctl reload`) y `rofi/colors.rasi`: generados e ignorados por git. En una instalación nueva hay que generarlos una vez (README, paso 23), o Hyprland arranca con errores y Rofi no abre.
 - `ags/colors.scss`: generado, pero trackeado (ver arriba).
+- `wallpaperSelect.sh` deja `~/.current_wallpaper` apuntando al elegido, y al iniciar sesión `hypr/scripts/restore-wallpaper.sh` lo vuelve a poner (o `groot_1.jpg`, que está en el repo). Ojo: `awww-daemon` no termina, así que nunca encadenar `awww-daemon && …`.
 
 ## Otros componentes
 
-- **Kanata** (`~/.config/kanata/scroll.kbd` + `kanata.service` de usuario, habilitado): remapeo de teclas, hoy Caps Lock mantenido + hjkl = scroll. Necesita el grupo `uinput`: regla udev en `/etc/udev/rules.d/99-input.rules` y módulo en `/etc/modules-load.d/uinput.conf`. El usuario ya está en `uinput` en `/etc/group`, pero el user manager de systemd arrancó antes de agregarlo: el servicio recién funciona tras reiniciar. Hasta entonces se lanza a mano con `sg uinput` (ver README, paso 25), con log en `~/.cache/kanata-manual.log`. Salida de emergencia: `Ctrl izq + Espacio + Esc`.
+- **Kanata** (`kanata.service` de usuario, habilitado): remapeo de teclas, hoy Caps Lock mantenido + hjkl = scroll. Todo vive en `~/.config/kanata/`: `scroll.kbd`, `system/` (copias de `/etc/udev/rules.d/99-input.rules` y `/etc/modules-load.d/uinput.conf`) y `setup.sh`, que instala eso en una máquina nueva. El usuario ya está en `uinput` en `/etc/group`, pero el user manager de systemd arrancó antes de agregarlo: el servicio recién funciona tras reiniciar. Hasta entonces se lanza a mano con `sg uinput` (README, paso 25), con log en `~/.cache/kanata-manual.log`. Salida de emergencia: `Ctrl izq + Espacio + Esc`.
 - **Hypridle**: sin auto-suspend. `systemctl suspend` cuelga en s2idle y nunca resume en este equipo.
-- **Apagones en idle**: el problema es de i915/firmware, mitigado con NVMe APST, microcode y cstate. AGS y waybar ya quedaron descartados como causa.
-- **Waybar**: desactivada. Su config queda como respaldo y la barra de AGS sigue usando `waybar/scripts/wlogout.sh`.
+- **Apagones en idle**: el problema es de i915/firmware, mitigado con parámetros del kernel en `/etc/default/grub` (NVMe APST, cstate, PSR, ASPM) y microcode. El lid switch se ignora en `/etc/systemd/logind.conf.d/no-suspend.conf`. Todo eso es de esta laptop y queda fuera del repo a propósito. AGS y waybar ya quedaron descartados como causa.
+- **Waybar**: eliminada el 2026-09-29 (config, scripts, template de Matugen y paquete). `wlogout.sh` se movió a `hypr/scripts/`.
 - **Calendario**: el popup de AGS, khal y el sync con Google Calendar se eliminaron el 2026-09-29. Quedan en el historial de git por si se retoma con otro enfoque.
+- **Otra máquina**: el README tiene una sección "Llevar esta config a otra máquina" con lo que no está en git y lo que es específico de esta laptop.
 
 ## Comandos útiles
 
