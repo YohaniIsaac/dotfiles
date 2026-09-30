@@ -1,6 +1,6 @@
 # Dotfiles – Contexto para Claude Code
 
-Escritorio Arch Linux + Hyprland. La guía de instalación y el detalle de cada componente están en `../README.md`. Este archivo resume lo que conviene saber antes de tocar la config.
+Escritorio Arch Linux + Hyprland. La guía de instalación y el detalle de cada componente están en `../README.md`. Este archivo resume lo que conviene saber antes de tocar la config. Los repositorios de los que se toman ideas de diseño (barra, popups, Rofi, widgets) están en `README.md`, en esta misma carpeta `.claude/`: consultarlos antes de diseñar un widget nuevo.
 
 ## Repo
 
