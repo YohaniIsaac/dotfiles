@@ -554,7 +554,7 @@ Una barra por monitor, arriba (`~/.config/ags/widget/bars/BottomBar.tsx`):
 
 - **Izquierda:** workspaces del monitor
 - **Centro:** reloj y Spotify (clic → popup del reproductor)
-- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen, red, batería, notificaciones y apagado (clic → wlogout, clic derecho → hyprlock)
+- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red, batería, notificaciones y apagado (clic → wlogout, clic derecho → hyprlock)
 
 Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` directo. El script:
 
@@ -564,6 +564,16 @@ Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` di
 - deja el log en `~/.cache/ags-start.log`.
 
 Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit`.
+
+### Volumen y popup de audio
+
+- **Rueda** sobre el módulo de volumen: sube o baja el volumen general de a 5 % (tope 100 %; subir también des-silencia). En el touchpad los deltas fraccionarios se acumulan hasta completar un paso.
+- **Clic**: abre `widget/AudioPopup.tsx` bajo el módulo, en el monitor de esa barra. Trae:
+  - el selector de salida: un clic deja el dispositivo como salida por defecto, igual que en pavucontrol, y WirePlumber lo recuerda;
+  - el volumen general, con su botón de silencio;
+  - un slider con silencio por cada aplicación que tenga un stream abierto (la lista se actualiza en vivo).
+- Esc o clic afuera lo cierra. `ags toggle audio-popup` lo abre desde la terminal, en el monitor con foco.
+- Todo sale de AstalWp por señales (`widget/audio.ts`), sin polling ni subprocesos. No hay ecualizador todavía: PipeWire no tiene EQ por aplicación, y uno global o por grupos de apps se haría con `filter-chain` (notas en `.config/dotfiles/.claude/CLAUDE.md`).
 
 > **Ojo al programar widgets:** nunca llames desde `createPoll`/`execAsync` a un comando que no termina (modo subscribe/follow/watch, como `swaync-client -swb`). Cada tick deja un proceso colgado, y al final se agotan los file descriptors del bus de sesión y se cierran todas las apps. El detalle está en el comentario de las notificaciones en `BottomBar.tsx`.
 

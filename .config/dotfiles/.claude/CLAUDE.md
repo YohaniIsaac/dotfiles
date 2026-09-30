@@ -36,9 +36,9 @@ Monitores de `yt-work` (esta laptop):
 - Una sola barra por monitor, anclada arriba, en `widget/bars/BottomBar.tsx` (el nombre quedó de cuando estaba abajo):
   - Izquierda: workspaces del monitor.
   - Centro: reloj y Spotify (click → popup `media-popup` de `widget/MediaPlayer.tsx`).
-  - Derecha: CPU/RAM/temperatura (click → `btop`; el sensor se busca por nombre al arrancar: `coretemp`/`k10temp`/`zenpower`), volumen, red, batería, notificaciones (swaync) y botón de apagado (click → `hypr/scripts/wlogout.sh`, click derecho → hyprlock).
-- `widget/mpris.ts`: estado compartido de Spotify/MPRIS. `app.ts` registra el popup y crea una barra por monitor. Los prototipos viejos (`Bar.tsx`, `ClockBar.tsx`, `WorkspaceBar.tsx`, `SystemBar.tsx`) se borraron el 2026-09-29.
-- Estilos: `style.scss` importa `_bar.scss` y `_mediaplayer.scss`. Los mixins están en `_shared.scss`. `colors.scss` lo genera Matugen y no se trackea (ver Theming).
+  - Derecha: CPU/RAM/temperatura (click → `btop`; el sensor se busca por nombre al arrancar: `coretemp`/`k10temp`/`zenpower`), volumen (rueda = volumen general en pasos de 5 %, click → popup `audio-popup` de `widget/AudioPopup.tsx`), red, batería, notificaciones (swaync) y botón de apagado (click → `hypr/scripts/wlogout.sh`, click derecho → hyprlock).
+- `widget/mpris.ts`: estado compartido de Spotify/MPRIS. `widget/audio.ts`: estado compartido de AstalWp (salida por defecto, listas de salidas y streams, ajuste con la rueda). `app.ts` registra los popups (`MediaPlayer`, `AudioPopup`) y crea una barra por monitor. Los prototipos viejos (`Bar.tsx`, `ClockBar.tsx`, `WorkspaceBar.tsx`, `SystemBar.tsx`) se borraron el 2026-09-29.
+- Estilos: `style.scss` importa `_bar.scss`, `_mediaplayer.scss` y `_audio.scss`. Los mixins (`pill-look`, `bar-pill`, `slider-track`) y `$popup-hover-fill` están en `_shared.scss`. `colors.scss` lo genera Matugen y no se trackea (ver Theming).
 - Librerías: AstalHyprland, AstalWp, AstalNetwork, AstalBattery y AstalMpris (paquetes `libastal-*-git`). La reactividad usa `gnim` (`createPoll`, `createExternal`, `.as()`).
 
 ### Arranque y reinicio
@@ -52,6 +52,20 @@ Monitores de `yt-work` (esta laptop):
 - Reiniciar la barra: `ags quit` (el loop la relanza en ~2 s). Si queda un `gjs` huérfano con el código viejo, hay que matarlo también.
 - Colores nuevos de Matugen: la barra los toma al reiniciarse. El `post_hook` de AGS en `matugen/config.toml` está desactivado para no crear una segunda instancia.
 - Compilar sin tocar la barra en vivo: `ags bundle ~/.config/ags/app.ts /tmp/ags-check.js`.
+
+### Volumen y popup de audio (notas de AstalWp)
+
+Código en `widget/audio.ts` (estado y ajuste con la rueda) y `widget/AudioPopup.tsx` (ventana). Lo que no se ve leyendo el código:
+
+- `wp.audio.default_speaker` es un endpoint *proxy*: AstalWp lo re-apunta solo cuando cambia el default y sigue emitiendo `notify::volume` y `notify::mute`. Se captura una vez; no hay que re-enlazarlo. Los elementos de `audio.speakers` son endpoints reales y emiten `notify::is-default`.
+- `set_is_default(true)` guarda el default *configurado* en WirePlumber (como pavucontrol): después de elegir una salida a mano, un dispositivo que aparece más tarde (los audífonos Bluetooth al conectarse) ya no toma el default solo.
+- `audio.speakers` y `audio.streams` notifican al añadir o quitar, pero nacen vacías: siempre `createBinding` + `<For>`, nunca leerlas una vez.
+- Una escritura de volumen se confirma de forma asíncrona (ida y vuelta a PipeWire): tras `node.volume = x`, la propiedad tarda unos ms en reflejarlo. Por eso `nudgeVolume` parte del último valor pedido si es reciente, y las pruebas no deben comprobar el resultado en el mismo tick.
+- En un stream, `name` vale "Playback" y `state` queda fijo en 0 en esta build (no sirve para saber si suena). El nombre útil es `application.name`. El tema de iconos es Adwaita y no trae los de las apps: por eso se usan glifos Nerd Font por nombre.
+- `Node.volume` se recorta a 0–1.5 y la escala es cúbica (coincide con `wpctl`); la UI topa en 100 %.
+- Colocación: `toggleAudioPopup(anchor)` fija el monitor y `marginRight` con la ventana oculta (una superficie layer-shell mapeada no cambia de salida) y centra el popup bajo el módulo. Con `ags toggle audio-popup` se abre en el monitor con foco, pegado a la derecha.
+- Ecualizador: pendiente. Es viable con `filter-chain` de PipeWire (biquads nativos, sin paquetes; ver `/usr/share/pipewire/filter-chain/sink-eq6.conf`). Cambiar una banda en vivo funciona con `pw-cli set-param <id-sink> Props '{ params = [ "eq_band_2:Gain" 6.0 ] }'` y mover un stream con `pw-metadata -n default <id-stream> target.object <sink>`; ambos se verificaron el 2026-09-30.
+- Probar sin tocar el audio real: `ags bundle` genera un script bash autoextraíble, se ejecuta con `bash x.js`, no con `gjs`. Un arnés temporal con `instanceName` propio puede montar `AudioPopup()` y ejercer los widgets contra un sink nulo (`pactl load-module module-null-sink sink_name=…`) y un stream `pw-play -P '{ node.dont-fallback=true }' --target <sink-nulo>`. Sin `dont-fallback`, un destino inexistente cae al default y suena en los audífonos. Cambiar el default de verdad mueve el audio del usuario: no probarlo sin avisar.
 
 ### Regla dura: nada de subscribe dentro de un poll
 
