@@ -4,33 +4,6 @@
 
 @use './shared' as *;
 
-// Opacidad del fondo del popup cuando el mouse está ENCIMA — más sólido para leer mejor.
-// En reposo usa $fill-intensity (transparente, igual que la barra). 1 = totalmente opaco.
-$popup-hover-fill: 0.92;
-
-// Estilo compartido por los nodos internos de cualquier <slider> (Astal.Slider = Gtk.Scale).
-// Parametrizado para poder hacer el seek más angosto y discreto que el de volumen.
-@mixin slider-track($track-height: 4px, $handle-size: 10px, $handle-color: $text) {
-  trough {
-    background: $surface-high;
-    border-radius: 999px;
-    min-height: $track-height;
-  }
-
-  highlight {
-    background: $primary;
-    border-radius: 999px;
-  }
-
-  slider {
-    background: $handle-color;
-    border-radius: 999px;
-    min-width: $handle-size;
-    min-height: $handle-size;
-    margin: 0;            // el tema base trae un margin negativo para desbordar el trough — lo resetea
-  }
-}
-
 window.MediaPlayer {
   background: transparent;
 

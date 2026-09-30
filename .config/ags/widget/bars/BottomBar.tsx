@@ -5,11 +5,12 @@ import { createPoll } from "ags/time"
 import { createExternal } from "ags"
 import GLib from "gi://GLib"
 import Hyprland from "gi://AstalHyprland"
-import Wp       from "gi://AstalWp"
 import Network  from "gi://AstalNetwork"
 import Battery  from "gi://AstalBattery"
 import Pango    from "gi://Pango"
 import { spotify, mediaState } from "../mpris"
+import { volState, volumeIcon, scrollVolume } from "../audio"
+import { toggleAudioPopup } from "../AudioPopup"
 
 const HOME = GLib.get_home_dir()
 const WS_NAV = `${HOME}/.config/hypr/scripts/workspace-nav.sh`
@@ -18,13 +19,7 @@ const WS_NAV = `${HOME}/.config/hypr/scripts/workspace-nav.sh`
 // Estas instancias son singletons — se inicializan una vez y quedan activas.
 
 const hypr    = Hyprland.get_default()!
-const wp      = Wp.get_default()
-// AstalWp inicializa async: en arranque en frío wp / wp.audio pueden ser null hasta que
-// emite "ready". Optional chaining para que, si eso ocurre, solo se degrade el módulo de
-// volumen en vez de tirar TODA la barra (que era la causa de que no apareciera al bootear).
-// El arranque ya se retrasa en start-bar.sh, así que en la práctica acá ya está listo —
-// esto es red de seguridad ante cualquier carrera residual.
-const speaker = wp?.audio?.get_default_speaker() ?? null
+// El servicio de audio (AstalWp) vive en ../audio: lo comparten el módulo de volumen y el popup.
 const network = Network.get_default()
 const bat     = Battery.get_default()   // null en equipos sin batería
 
@@ -148,43 +143,30 @@ function WorkspacesPill({ connector }: { connector: string }) {
   )
 }
 
-// ── Volumen — reactivo via AstalWp (WirePlumber) ──────────────────────────────
-
-function volumeIcon(pct: number, muted: boolean): string {
-  if (muted) return "󰝟"
-  if (pct === 0) return "󰕿"
-  if (pct < 50)  return "󰖀"
-  return "󰕾"
-}
-
-type VolState = { pct: number; muted: boolean }
-
-function computeVol(): VolState {
-  return {
-    pct:   Math.round((speaker?.volume ?? 0) * 100),
-    muted: speaker?.mute ?? false,
-  }
-}
-
-const volState = createExternal<VolState>(
-  computeVol(),
-  (set) => {
-    if (!speaker) return () => {}
-    const refresh = () => set(computeVol())
-    const ids = [
-      speaker.connect("notify::volume", refresh),
-      speaker.connect("notify::mute",   refresh),
-    ]
-    return () => ids.forEach(id => speaker!.disconnect(id))
-  }
-)
+// ── Volumen — estado en widget/audio.ts (AstalWp / WirePlumber) ──────────────
+// Scroll = volumen general (pasos de 5 %, ver scrollVolume). Clic = popup de audio con el
+// selector de salida y un slider por aplicación (widget/AudioPopup.tsx).
 
 function Volume() {
   return (
-    <box class="sys-module" spacing={5} valign={Gtk.Align.CENTER}>
-      <label class="sys-icon" label={volState.as(v => volumeIcon(v.pct, v.muted))} />
-      <label class="sys-text" label={volState.as(v => v.muted ? "mut" : `${v.pct}%`)} />
-    </box>
+    <button
+      class="sys-btn"
+      onClicked={(self: Gtk.Button) => toggleAudioPopup(self)}
+      $={(self) => {
+        const scroll = new Gtk.EventControllerScroll()
+        scroll.set_flags(Gtk.EventControllerScrollFlags.VERTICAL)
+        scroll.connect("scroll", (_c: Gtk.EventControllerScroll, _dx: number, dy: number) => {
+          scrollVolume(dy)
+          return true
+        })
+        self.add_controller(scroll)
+      }}
+    >
+      <box class="sys-module" spacing={5} valign={Gtk.Align.CENTER}>
+        <label class="sys-icon" label={volState.as(v => volumeIcon(v.pct, v.muted))} />
+        <label class="sys-text" label={volState.as(v => v.muted ? "mut" : `${v.pct}%`)} />
+      </box>
+    </button>
   )
 }
 

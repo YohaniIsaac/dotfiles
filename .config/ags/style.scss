@@ -1,9 +1,11 @@
 // Punto de entrada — solo importa los archivos de estilos.
 // Para editar estilos ve al archivo correspondiente:
-//   _shared.scss      → variables globales ($radius, $font) y mixins (bar-pill)
+//   _shared.scss      → variables globales ($radius, $font) y mixins (bar-pill, slider-track)
 //   _bar.scss         → barra inferior (reloj, workspaces, sistema)
 //   _mediaplayer.scss → popup del reproductor (Spotify)
+//   _audio.scss       → popup de audio (salida, volumen general y por aplicación)
 //   colors.scss       → colores Matugen (no editar manualmente)
 
 @use './bar';
 @use './mediaplayer';
+@use './audio';

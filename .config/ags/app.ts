@@ -3,12 +3,14 @@ import { Gdk } from "ags/gtk4"
 import style from "./style.scss"
 
 import MediaPlayer from "./widget/MediaPlayer"
+import AudioPopup  from "./widget/AudioPopup"
 import BottomBar   from "./widget/bars/BottomBar"
 
 app.start({
   css: style,
   main() {
     MediaPlayer()
+    AudioPopup()
 
     const monitors = Gdk.Display.get_default()?.get_monitors()
     if (!monitors) return
