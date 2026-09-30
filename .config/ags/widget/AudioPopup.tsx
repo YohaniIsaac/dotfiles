@@ -1,9 +1,12 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
-import { For, createBinding, createComputed } from "ags"
+import { For, With, createBinding, createComputed } from "ags"
 import Pango from "gi://Pango"
 import Wp    from "gi://AstalWp"
-import { speaker, speakers, streams, volumeIcon } from "./audio"
+import {
+  defaultEndpoint, nodeName, refreshDefault, selectOutput, setVolume,
+  speakers, streams, volumeIcon,
+} from "./audio"
 
 // ── Popup de audio — selector de salida, volumen general y un slider por aplicación ──────────
 // Se abre con clic en el módulo de volumen de la barra (toggleAudioPopup, llamada desde
@@ -23,6 +26,7 @@ const G = {
   bluetooth:  "\u{F00B0}",   // 󰂰
   speaker:    "\u{F04C3}",   // 󰓃
   check:      "\u{F012C}",   // 󰄬
+  muted:      "\u{F075F}",   // 󰝟
   web:        "\u{F059F}",   // 󰖟
   spotify:    "\u{F04C7}",   // 󰓇
   discord:    "\u{F066F}",   // 󰙯
@@ -87,7 +91,7 @@ function VolumeControl({ node }: { node: Wp.Node }) {
       <slider class="audio-slider" hexpand valign={Gtk.Align.CENTER} min={0} max={1}
         value={volume}
         onChangeValue={(_s: Astal.Slider, _t: Gtk.ScrollType, value: number) => {
-          node.volume = Math.min(1, value)
+          setVolume(node, value)
           return false
         }}
       />
@@ -98,17 +102,20 @@ function VolumeControl({ node }: { node: Wp.Node }) {
 }
 
 function DeviceRow({ device }: { device: Wp.Endpoint }) {
-  const isDefault = createBinding(device, "isDefault")
+  // OJO: no usar Endpoint.is_default: AstalWp no se entera de los cambios de default en esta máquina
+  // (ver widget/audio.ts). El check sale del default real, el mismo que controla el volumen general.
+  const isDefault = defaultEndpoint.as(ep => !!ep && nodeName(ep) === nodeName(device))
 
   return (
     <button class={isDefault.as(d => d ? "audio-device active" : "audio-device")}
-      onClicked={() => { device.is_default = true }}
+      onClicked={() => selectOutput(device)}
     >
       <box spacing={8} valign={Gtk.Align.CENTER}>
         <label class="audio-device-icon" label={deviceGlyph(device)} />
         <label class="audio-device-name" hexpand halign={Gtk.Align.START}
           label={createBinding(device, "description").as(d => d || device.name || "?")}
           maxWidthChars={30} ellipsize={Pango.EllipsizeMode.END} />
+        <label class="audio-device-muted" label={G.muted} visible={createBinding(device, "mute")} />
         <label class="audio-device-check" label={G.check} visible={isDefault} />
       </box>
     </button>
@@ -154,6 +161,10 @@ export default function AudioPopup() {
         self.marginRight = 8
         self.anchor = Astal.WindowAnchor.TOP | Astal.WindowAnchor.RIGHT
 
+        // Cada vez que se abre (clic o `ags toggle`) se confirma cuál es la salida por defecto real:
+        // AstalWp no avisa de los cambios hechos desde fuera del popup.
+        self.connect("notify::visible", () => { if (self.visible) refreshDefault() })
+
         // Se cierra al perder el foco (clic afuera). wasActive evita cerrarlo apenas se abre
         // (is-active empieza en false hasta que el compositor le da foco): solo true → false.
         let wasActive = false
@@ -183,9 +194,13 @@ export default function AudioPopup() {
             {(device: Wp.Endpoint) => <DeviceRow device={device} />}
           </For>
         </box>
-        {speaker
-          ? <VolumeControl node={speaker} />
-          : <label class="audio-empty" label="Audio no disponible" halign={Gtk.Align.START} />}
+        <box orientation={Gtk.Orientation.VERTICAL}>
+          <With value={defaultEndpoint}>
+            {(ep: Wp.Endpoint | null) => ep
+              ? <VolumeControl node={ep} />
+              : <label class="audio-empty" label="Audio no disponible" halign={Gtk.Align.START} />}
+          </With>
+        </box>
 
         <label class="audio-title audio-title-apps" label="Aplicaciones" halign={Gtk.Align.START} />
         <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
