@@ -30,6 +30,14 @@ Nuestro stack es **AGS v3 + Astal (GTK4) + gnim** sobre Hyprland. Los repos con 
 | [Axarva/dotfiles-2.0](https://github.com/Axarva/dotfiles-2.0) | Configuración de XMonad con widgets de Eww (dashboard y barra lateral), menús de Rofi y barra tint2, con scripts de instalación para varias distros. Pensada para una pantalla de 1366×768. | Eww, Rofi, tint2 |
 | [adi1090x/widgets](https://github.com/adi1090x/widgets) | Colección de widgets de Eww con dos estilos, "Arin" y "Dashboard", pensados para 1920×1080, con integraciones como clima y correo. | Eww |
 
+## Pantalla de bloqueo
+
+Añadida por Claude el 2026-10-01, al hacer la pantalla de bloqueo.
+
+| Referencia | Qué es | Stack |
+|---|---|---|
+| [pinkSakoora/sakoora.hyprlock](https://github.com/pinkSakoora/sakoora.hyprlock) | Estilos de hyprlock con instalador: tarjetas redondeadas translúcidas con reloj, fecha, reproductor, red, bluetooth y batería, y scripts para cada widget. **Licencia GPL-3.0: no se copia código.** El `style-1` es el diseño que se tomó de base para `hypr/hyprlock.conf` (tarjetas sobre el fondo desenfocado); el código es propio. | Hyprland, hyprlock |
+
 ## Audio y ecualizador
 
 Añadidas por Claude durante la investigación del popup de audio (2026-09-30); se pueden quitar si no interesan.

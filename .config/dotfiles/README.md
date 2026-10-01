@@ -457,7 +457,7 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 
 | Tecla | Acción |
 |---|---|
-| `Super + Shift + L` | Bloquear pantalla |
+| `Super + Shift + L` | Bloquear pantalla (`hypr/scripts/lock.sh`, ver [Pantalla de bloqueo](#pantalla-de-bloqueo-hyprlock)) |
 | `Super + Ctrl + Q` | Menú de salida (wlogout) |
 | `Super + Ctrl + R` | Recargar Hyprland |
 | `Super + Shift + A` | Activar/desactivar animaciones |
@@ -486,7 +486,11 @@ La configuración está en `~/.config/kanata/scroll.kbd`: un toque corto de Caps
 │   ├── hypr/                  # Hyprland: ventanas, keybindings, autostart…
 │   │   ├── hosts/             # Monitores de cada máquina: yt-work, yt-home, default
 │   │   ├── host.conf          # Symlink (no trackeado) al hosts/<hostname>.conf de esta máquina
-│   │   └── scripts/           # machine-setup.sh, start-bar.sh, restore-wallpaper.sh, workspaces…
+│   │   ├── hyprlock.conf      # Pantalla de bloqueo (tarjetas de información)
+│   │   ├── lock-fonts/        # Presets de tipografía de la pantalla de bloqueo (jetbrains, sakoora, oxygen)
+│   │   ├── lock-font.conf     # Symlink (no trackeado) al preset activo
+│   │   ├── weather.conf       # Ciudad del clima del bloqueo (local, NO trackeado)
+│   │   └── scripts/           # machine-setup.sh, start-bar.sh, lock.sh, lock-info.sh, lock-font.sh, restore-wallpaper.sh, workspaces…
 │   ├── kanata/                # Remapeo de teclado (Caps Lock + hjkl = scroll)
 │   │   ├── scroll.kbd         # Config de kanata
 │   │   ├── system/            # Regla udev y carga de uinput (van en /etc)
@@ -533,6 +537,8 @@ Matugen pone el wallpaper con awww y genera los colores desde los templates de `
 
 Esos tres archivos de colores **no se trackean**: cada máquina genera los suyos según sus wallpapers, y así no cambian en git cada vez que eliges otro.
 
+`hypr/colors.conf` trae al final tres variantes con transparencia (`$lock_card`, `$lock_card_border`, `$lock_field`) que usa `hyprlock.conf`: hyprlang no puede aplicar alfa a una variable, así que las genera la propia plantilla (`templates/hypr-colors.conf`) y también están en `defaults/hypr-colors.conf`. Si cambias su transparencia, cámbiala en la plantilla y vuelve a elegir un wallpaper.
+
 Lo que sí está en el repo es un tema por defecto para una máquina nueva: el wallpaper `~/Pictures/wallpapers/groot_1.jpg` y sus colores en `~/.config/matugen/defaults/`. `~/.config/matugen/apply-defaults.sh` copia esos colores **solo a los archivos que todavía no existen**, así que nunca pisa los de tu wallpaper actual. Sin ellos, Hyprland arranca con errores, Rofi no abre y la barra de AGS no compila. Lo llama `hypr/scripts/machine-setup.sh` (desde `install.sh` y al iniciar sesión). Al iniciar sesión, `hypr/scripts/restore-wallpaper.sh` además vuelve a poner el último wallpaper elegido (`~/.current_wallpaper`), o `groot_1.jpg` si todavía no elegiste ninguno.
 
 Para cambiar el tema por defecto: elige el wallpaper con `Super + W`, agrégalo al repo (`Pictures/` está ignorado, por eso el `-f`) y copia sus colores a `defaults/`:
@@ -554,7 +560,7 @@ Una barra por monitor, arriba (`~/.config/ags/widget/bars/BottomBar.tsx`):
 
 - **Izquierda:** workspaces del monitor
 - **Centro:** reloj y Spotify (clic → popup del reproductor)
-- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red (clic → popup de red), batería, notificaciones y apagado (clic → wlogout, clic derecho → hyprlock)
+- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red (clic → popup de red), batería, notificaciones y apagado (clic → wlogout, clic derecho → bloquear con `lock.sh`)
 
 Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` directo. El script:
 
@@ -591,6 +597,76 @@ Los tres popups (Spotify, audio y red) comparten la ventana layer-shell y su col
 - **Estado de la verificación** (2026-09-30): probado con la red real de esta laptop (lista y agrupación de redes, escaneo, estado de Ethernet, perfiles aceptados por NetworkManager, clic en la barra, campo de contraseña y foco) y con datos simulados (todos los estados del popup y los pasos de una conexión fallida). **Sin probar todavía**: conectar con contraseña a una red nueva (correcta e incorrecta), apagar y encender el Wi-Fi, y Ethernet con el cable enchufado.
 
 > **Ojo al programar widgets:** nunca llames desde `createPoll`/`execAsync` a un comando que no termina (modo subscribe/follow/watch, como `swaync-client -swb`). Cada tick deja un proceso colgado, y al final se agotan los file descriptors del bus de sesión y se cierran todas las apps. El detalle está en el comentario de las notificaciones en `BottomBar.tsx`.
+
+---
+
+## Pantalla de bloqueo (hyprlock)
+
+Tarjetas translúcidas sobre el mismo wallpaper del escritorio, desenfocado: **hora**, **avatar con día y fecha**, **clima** y **reproductor**. Solo información, sin dashboard. El campo de contraseña es pequeño y está oculto: aparece al empezar a teclear (`fade_on_empty`). El diseño es `hypr/hyprlock.conf`, inspirado en [sakoora.hyprlock](https://github.com/pinkSakoora/sakoora.hyprlock) (style-1; su licencia es GPL-3.0, así que aquí solo está la idea, nada de su código) y con los colores de Matugen.
+
+**Cómo se bloquea.** Todos los caminos pasan por `hypr/scripts/lock.sh`: el atajo `Super + Shift + L`, el `lock_cmd` de hypridle (bloqueo a los 15 min de inactividad; también lo usan el botón *Lock* de wlogout y el bloqueo previo a suspender, que van por `loginctl lock-session`) y el clic derecho del botón de apagado de la barra. El script:
+
+- pregunta al compositor (`hyprctl locked`) en vez de mirar procesos, y no lanza otro hyprlock si ya hay un bloqueo (una doble pulsación o hypridle a la vez);
+- elimina los hyprlock zombis y vigila el que lanza. hyprlock 0.9.6 a veces no sale tras desbloquear ([hyprlock#1076](https://github.com/hyprwm/hyprlock/issues/1076)), y con la receta de la wiki (`pidof hyprlock || hyprlock`) ese proceso dejaba sin efecto el bloqueo por inactividad: en esta laptop pasó del 9-sep al 1-oct de 2026 sin que se notara;
+- manda la salida de hyprlock a `~/.cache/hyprlock/lock.log`, no a un pipe (si un pipe se cierra, SIGPIPE mataría al bloqueador).
+
+Justo antes, `lock-info.sh prepare` deja en `~/.cache/hyprlock/` el enlace al wallpaper actual (`~/.current_wallpaper`) y el avatar.
+
+**Avatar.** Guarda tu foto como `~/.face` (cualquier imagen: se recorta al centro y se muestra en círculo, con un anillo del color del tema). Mientras no exista se ve un icono de usuario.
+
+**Clima.** [Open-Meteo](https://open-meteo.com): gratis y sin clave para uso no comercial, datos CC BY 4.0. La ciudad va en `~/.config/hypr/weather.conf`, que es **local y no se trackea** (el repo es público; está en el `info/exclude` del repo bare):
+
+```
+LOCATION=Santiago   # ejemplo: pon tu ciudad
+COUNTRY=CL          # código de 2 letras, evita homónimos
+# o, sin buscar por nombre:  LAT=-33.45  LON=-70.67
+```
+
+La caché (`~/.cache/hyprlock/weather.json`) se renueva en segundo plano al bloquear y mientras sigue bloqueada, si tiene más de 20 min. Con más de 3 h no se muestra nada antes que un dato viejo, y sin `weather.conf` la tarjeta dice "Sin datos del clima".
+
+**Reproductor.** playerctl: el que esté sonando (si no, uno en pausa), con su portada. Sin reproductor: "Nada en reproducción".
+
+**Tipografía.** Ningún texto de `hyprlock.conf` lleva la fuente escrita: usan las variables de un *preset* de `hypr/lock-fonts/` (familia y tamaño de cada rol: hora, día, temperatura…). Hay tres guardados: `sakoora` (**la de por defecto**: Josefin Sans y Fira Code Nerd Font, como [sakoora.hyprlock](https://github.com/pinkSakoora/sakoora.hyprlock)), `jetbrains` (la de la barra y la terminal; es la base de respaldo, y la que se usa en una máquina que aún no tiene Josefin Sans) y `oxygen` (Oxygen Mono, con los iconos en JetBrains Mono Nerd Font). Para ver otra y cambiarla:
+
+```bash
+~/.config/hypr/scripts/lock-font.sh           # lista los presets (● = el activo)
+~/.config/hypr/scripts/lock-font.sh sakoora   # lo activa; se ve la próxima vez que bloquees
+```
+
+Josefin Sans y Oxygen Mono no vienen de ningún paquete: `lock-font.sh` las baja de Google Fonts (licencia OFL) a `~/.local/share/fonts/` junto con su licencia, sin sudo (`lock-font.sh install` baja las de todos los presets). Para probar otra fuente, copia un preset, cambia sus familias y tamaños y actívalo; un preset puede llevar líneas `# descarga: <carpeta> <url>…` con de dónde bajar su fuente. El preset activo es el enlace `hypr/lock-font.conf`, por máquina (ignorado por git; lo crea `lock-font.sh` o, si falta, `lock-info.sh prepare`: `sakoora` si Josefin Sans está instalada y, si no, `jetbrains`).
+
+**Dependencias** (todo en `packages.txt`): hyprlock, hypridle, playerctl, jq, curl, imagemagick, `ttf-jetbrains-mono-nerd` y `ttf-firacode-nerd`. Josefin Sans y Oxygen Mono no son de paquete: `lock-font.sh install`.
+
+**Si hyprlock muere con la sesión bloqueada** (pantalla "lockscreen app died"), desde otro TTY (`Ctrl + Alt + F3`):
+
+```bash
+hyprctl --instance 0 dispatch exec ~/.config/hypr/scripts/lock.sh
+```
+
+`misc:allow_session_lock_restore = true` ya está en `misc.conf` para eso. El desbloqueo de emergencia es `pkill -USR1 hyprlock`.
+
+**Retocar el diseño:** las trampas de hyprlock (bloques en varias líneas, `font_size` en puntos, opciones que ya no existen) están en `.claude/CLAUDE.md`, y para probar cambios sin bloquear tu sesión hay un arnés en `.claude/lock-harness/`.
+
+**Estado de la verificación** (2026-10-01): en un compositor anidado y con el PAM falso se probó el diseño (con datos reales y simulados: sin reproductor, sin clima, título largo con `&` y `<`, avatar con foto, pantalla a escala 1,25, campo de contraseña visible) y `lock.sh` (bloquear, repetir, zombi, dos lanzamientos a la vez, re-bloquear con un zombi vivo). **Sin probar:** teclear en el campo (que aparezca, los puntos, el fallo de autenticación) y desbloquear con la contraseña real, el bloqueo real por inactividad, el botón *Lock* de wlogout y tres monitores a la vez. Las tres tipografías se renderizaron en el compositor anidado con el día y la fecha más largos (MIÉRCOLES, 30 de septiembre), títulos y artistas largos o con tildes de mayúscula; `sakoora` y `oxygen` no se han usado todavía en un bloqueo real.
+
+---
+
+## Fuentes
+
+No hay un lugar único: el sistema (fontconfig) sabe qué fuentes existen y cada aplicación elige la suya por nombre.
+
+| Qué | Dónde |
+|---|---|
+| Instalar fuentes del sistema | `packages.txt` (`ttf-jetbrains-mono-nerd`, `ttf-firacode-nerd`, `noto-fonts`…): quedan en `/usr/share/fonts/` |
+| Fuentes de usuario, sin sudo | `~/.local/share/fonts/<carpeta>/` y después `fc-cache -f` (ahí van Josefin Sans y Oxygen Mono) |
+| Qué ve fontconfig | `fc-list : family`, `fc-match "<nombre>"`. No hay `~/.config/fontconfig`: `monospace` cae en Noto Sans Mono y `sans-serif` en Noto Sans |
+| Barra y popups (AGS) | `$font` en `ags/_shared.scss`: una sola variable para toda la barra |
+| Terminal | `kitty/kitty.conf` (`font_family`) |
+| Rofi | `rofi/config.rasi` (`font:`) |
+| Pantalla de bloqueo | presets de `hypr/lock-fonts/`, con `hypr/scripts/lock-font.sh` (ver arriba) |
+| Aplicaciones GTK sin configuración propia (Thunar, pavucontrol…) | `gsettings get org.gnome.desktop.interface font-name` (hoy "Adwaita Sans 11") |
+
+Un nombre que fontconfig no conoce no da error: la aplicación cae en Noto Sans sin avisar. Se comprueba con `fc-list -q ":family=<nombre>"`.
 
 ---
 
@@ -647,6 +723,9 @@ Siguiendo los pasos 18–25 queda todo lo que está en el repo. Esto no está en
 | Claves SSH (y GPG, si usas) | Copiarlas o generarlas de nuevo (paso 20) |
 | Wallpapers (~215 MB) | `rsync` de `~/Pictures/wallpapers/` (paso 23) |
 | Perfil de Brave | Brave Sync |
+| Avatar de la pantalla de bloqueo | Copiar la foto como `~/.face` (sin ella se ve un icono) |
+| Fuentes Josefin Sans y Oxygen Mono (presets de la pantalla de bloqueo) | `~/.config/hypr/scripts/lock-font.sh install` (las baja de Google Fonts). Sin Josefin Sans el bloqueo usa `jetbrains` |
+| Ciudad del clima del bloqueo | Crear `~/.config/hypr/weather.conf` a mano (`LOCATION=…`, `COUNTRY=…`; ver [Pantalla de bloqueo](#pantalla-de-bloqueo-hyprlock)). Es local, no está en git |
 | Skill `scout` de Claude Code | Clonar `YohaniIsaac/scout-skills` en `~/personal-git/` y `ln -s ~/personal-git/scout-skills ~/.claude/skills/scout` |
 | Repos personales y de trabajo | Clonarlos en `~/personal-git/` y `~/git/` |
 | Reglas udev de herramientas embebidas (OpenOCD, J-Link, Joulescope) | Vienen con cada herramienta; se reinstalan con ella |
