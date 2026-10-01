@@ -554,7 +554,7 @@ Una barra por monitor, arriba (`~/.config/ags/widget/bars/BottomBar.tsx`):
 
 - **Izquierda:** workspaces del monitor
 - **Centro:** reloj y Spotify (clic → popup del reproductor)
-- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red, batería, notificaciones y apagado (clic → wlogout, clic derecho → hyprlock)
+- **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red (clic → popup de red), batería, notificaciones y apagado (clic → wlogout, clic derecho → hyprlock)
 
 Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` directo. El script:
 
@@ -565,6 +565,8 @@ Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` di
 
 Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit`.
 
+Los tres popups (Spotify, audio y red) comparten la ventana layer-shell y su colocación bajo el módulo que los abre: `widget/Popup.tsx`. Cada uno solo aporta su contenido.
+
 ### Volumen y popup de audio
 
 - **Rueda** sobre el módulo de volumen: sube o baja el volumen general de a 5 % (tope 100 %; subir también des-silencia). En el touchpad los deltas fraccionarios se acumulan hasta completar un paso.
@@ -574,6 +576,19 @@ Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit
   - un slider con silencio por cada aplicación que tenga un stream abierto (la lista se actualiza en vivo).
 - Esc o clic afuera lo cierra. `ags toggle audio-popup` lo abre desde la terminal, en el monitor con foco.
 - Volumen, mute y las listas de salidas y aplicaciones salen de AstalWp por señales (`widget/audio.ts`). La **salida por defecto** se consulta con `pw-metadata` (una consulta que termina) al arrancar, al abrir el popup, tras elegir una salida y cada 3 s, porque AstalWp no se entera de los cambios de default en esta máquina. No hay ecualizador todavía: PipeWire no tiene EQ por aplicación, y uno global o por grupos de apps se haría con `filter-chain` (notas en `.config/dotfiles/.claude/CLAUDE.md`).
+
+### Red y popup de red
+
+- **Icono** del módulo: las barras de la señal del Wi-Fi (4 niveles), una alerta si está conectado pero sin internet, el icono vacío si está encendido sin conexión, tachado si está apagado, y el cable cuando la conexión principal es Ethernet.
+- **Clic**: abre `widget/NetworkPopup.tsx` bajo el módulo, en el monitor de esa barra. Trae:
+  - una fila de **Ethernet** con su estado (conectado y a qué velocidad, conectando, sin conexión o sin cable). Aunque haya varios puertos (un dock USB trae dos) se resume en una sola fila;
+  - el **interruptor de Wi-Fi** (con el hardware apagado, por la tecla de modo avión, se ve apagado y no responde) y un botón para buscar redes. Al abrir el popup se hace un escaneo solo;
+  - la lista de **redes cercanas**: la conectada arriba (con «Desconectar») y el resto por señal. Las redes guardadas y las abiertas se conectan con un clic; una red nueva con contraseña (WPA2 o WPA3) abre un campo de contraseña bajo su fila. Si la contraseña es incorrecta, el campo se vuelve a abrir con el aviso;
+  - **Configuración avanzada…**, que abre `nm-connection-editor` para lo que el popup no hace: redes empresariales (802.1X), redes ocultas, IP fija, VPN y olvidar una red.
+- Solo se listan puntos de acceso de infraestructura (se ocultan los nodos mesh y las redes ad-hoc). Las redes WEP o empresariales se muestran, pero avisan de que hay que usar Configuración avanzada.
+- Esc (o clic afuera) cierra el popup; dentro del campo de contraseña, Esc cierra solo el campo. `ags toggle network-popup` lo abre desde la terminal.
+- El estado sale de NetworkManager por señales (`widget/network.ts`, sobre libnm): sin sondeo ni subprocesos. Las contraseñas nuevas se guardan en el perfil del sistema de NetworkManager, nunca en estos dotfiles.
+- **Estado de la verificación** (2026-09-30): probado con la red real de esta laptop (lista y agrupación de redes, escaneo, estado de Ethernet, perfiles aceptados por NetworkManager, clic en la barra, campo de contraseña y foco) y con datos simulados (todos los estados del popup y los pasos de una conexión fallida). **Sin probar todavía**: conectar con contraseña a una red nueva (correcta e incorrecta), apagar y encender el Wi-Fi, y Ethernet con el cable enchufado.
 
 > **Ojo al programar widgets:** nunca llames desde `createPoll`/`execAsync` a un comando que no termina (modo subscribe/follow/watch, como `swaync-client -swb`). Cada tick deja un proceso colgado, y al final se agotan los file descriptors del bus de sesión y se cierran todas las apps. El detalle está en el comentario de las notificaciones en `BottomBar.tsx`.
 
