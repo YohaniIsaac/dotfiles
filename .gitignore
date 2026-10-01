@@ -7,6 +7,11 @@
 # --- Por máquina: symlink a hypr/hosts/<hostname>.conf (lo crea machine-setup.sh) ---
 .config/hypr/host.conf
 
+# --- Por máquina, pantalla de bloqueo: preset de tipografía activo (symlink a hypr/lock-fonts/, lo
+#     crea lock-font.sh o lock-info.sh prepare) y ciudad del clima (privada: el repo es público) ---
+.config/hypr/lock-font.conf
+.config/hypr/weather.conf
+
 # --- Historia y runtime ---
 .bash_history
 .zsh_history
