@@ -10,7 +10,7 @@ import Battery  from "gi://AstalBattery"
 import Pango    from "gi://Pango"
 import { spotify, mediaState } from "../mpris"
 import { volState, volumeIcon, scrollVolume } from "../audio"
-import { toggleAudioPopup } from "../AudioPopup"
+import { togglePopup } from "../Popup"
 
 const HOME = GLib.get_home_dir()
 const WS_NAV = `${HOME}/.config/hypr/scripts/workspace-nav.sh`
@@ -151,7 +151,7 @@ function Volume() {
   return (
     <button
       class="sys-btn"
-      onClicked={(self: Gtk.Button) => toggleAudioPopup(self)}
+      onClicked={(self: Gtk.Button) => togglePopup("audio-popup", self)}
       $={(self) => {
         const scroll = new Gtk.EventControllerScroll()
         scroll.set_flags(Gtk.EventControllerScrollFlags.VERTICAL)

@@ -1,6 +1,6 @@
 // ── Popup del reproductor (Spotify) ─────────────────────────────────────────────
 // Se abre con clic en la carátula de la píldora central de la barra. Esc lo cierra.
-// app.toggle_window("media-popup") — ver widget/MediaPlayer.tsx
+// app.toggle_window("media-popup") — ver widget/MediaPlayer.tsx y widget/Popup.tsx
 
 @use './shared' as *;
 
@@ -12,14 +12,8 @@ window.MediaPlayer {
   // Mismo look que las píldoras de la barra (borde sólido + glow + fondo transparente).
   // Transparencia dinámica: transparente en reposo, más sólido al pasar el mouse (para leer).
   .popup-root {
-    @include pill-look;
+    @include popup-surface(16px);
     min-width: 380px;   // ancho del popup — carátula a la izquierda, todo lo demás a la derecha
-    padding: 16px;
-    transition: background 200ms ease;
-
-    &:hover {
-      background: rgba($surface, $popup-hover-fill);
-    }
   }
 
   .media-popup-cover {

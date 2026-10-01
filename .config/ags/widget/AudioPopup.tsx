@@ -1,23 +1,23 @@
-import app from "ags/gtk4/app"
-import { Astal, Gtk, Gdk } from "ags/gtk4"
+import { Astal, Gtk } from "ags/gtk4"
 import { For, With, createBinding, createComputed } from "ags"
 import Pango from "gi://Pango"
 import Wp    from "gi://AstalWp"
+import { Popup } from "./Popup"
 import {
   defaultEndpoint, nodeName, refreshDefault, selectOutput, setVolume,
   speakers, streams, volumeIcon,
 } from "./audio"
 
 // ── Popup de audio — selector de salida, volumen general y un slider por aplicación ──────────
-// Se abre con clic en el módulo de volumen de la barra (toggleAudioPopup, llamada desde
-// BottomBar.tsx). Esc o clic afuera lo cierra. Mismo patrón que MediaPlayer.tsx.
+// Se abre con clic en el módulo de volumen de la barra (togglePopup("audio-popup"), desde
+// BottomBar.tsx). Esc o clic afuera lo cierra. La ventana y su colocación son de Popup.tsx.
 //
 // Todo el estado viene de AstalWp por señales (widget/audio.ts): sin polling ni subprocesos.
 // Los sliders escriben en vivo: AstalWp usa el mixer de WirePlumber dentro del proceso, no hay
 // llamadas D-Bus que espaciar (a diferencia del volumen de Spotify en MediaPlayer.tsx). Se usa
 // "change-value" (solo se emite por acción del usuario) para no crear un bucle con el binding.
 
-const POPUP_WIDTH = 340   // ancho fijo del popup — también centra el popup bajo el módulo (toggleAudioPopup)
+const POPUP_WIDTH = 340   // ancho fijo del popup (también centra el popup bajo el módulo: ver Popup.tsx)
 
 // Iconos Nerd Font (Material Design), como el resto de la barra. El tema de iconos (Adwaita) no
 // trae los iconos de las apps (brave, spotify…), así que cada app se resuelve a un glifo por nombre.
@@ -49,29 +49,6 @@ function appGlyph(s: Wp.Stream): string {
   if (/brave|chrom|firefox|zen|librewolf|vivaldi|opera|edge|epiphany/.test(id)) return G.web
   if (/mpv|vlc|celluloid|totem|kodi|obs/.test(id))                     return G.video
   return G.music
-}
-
-// ── Apertura desde la barra ───────────────────────────────────────────────────────────────────
-// Se abre en el monitor de la barra donde se hizo clic y centrado bajo el módulo (recortado al
-// borde derecho). El monitor y el margen se fijan con la ventana oculta: una superficie
-// layer-shell ya mapeada no cambia de salida.
-
-export function toggleAudioPopup(anchor: Gtk.Widget) {
-  const win = app.get_window("audio-popup") as Astal.Window | null
-  if (!win) return
-  if (win.visible) { win.visible = false; return }
-
-  const bar = anchor.get_root() as unknown as Astal.Window | null
-  const monitor = bar?.gdkmonitor
-  if (bar && monitor) {
-    const [ok, rect] = anchor.compute_bounds(bar)
-    if (ok) {
-      const center = rect.get_x() + rect.get_width() / 2
-      win.marginRight = Math.max(8, Math.round(monitor.get_geometry().width - center - POPUP_WIDTH / 2))
-    }
-    win.gdkmonitor = monitor
-  }
-  win.visible = true
 }
 
 // ── Filas ─────────────────────────────────────────────────────────────────────────────────────
@@ -146,71 +123,31 @@ function StreamRow({ stream }: { stream: Wp.Stream }) {
 
 export default function AudioPopup() {
   return (
-    <window
-      name="audio-popup"
-      class="AudioPopup"
-      visible={false}
-      application={app}
-      keymode={Astal.Keymode.ON_DEMAND}
-      $={(self) => {
-        // Igual que MediaPlayer: anchor y márgenes se fijan acá y no como props iniciales (con
-        // anchor en las props, Gtk.Application no registra la ventana y get_window falla), y el
-        // margen va ANTES que el anchor o queda ignorado. marginRight es el valor por defecto;
-        // toggleAudioPopup lo recalcula en cada apertura para centrar el popup bajo el módulo.
-        self.marginTop = 5
-        self.marginRight = 8
-        self.anchor = Astal.WindowAnchor.TOP | Astal.WindowAnchor.RIGHT
-
-        // Cada vez que se abre (clic o `ags toggle`) se confirma cuál es la salida por defecto real:
-        // AstalWp no avisa de los cambios hechos desde fuera del popup.
-        self.connect("notify::visible", () => { if (self.visible) refreshDefault() })
-
-        // Se cierra al perder el foco (clic afuera). wasActive evita cerrarlo apenas se abre
-        // (is-active empieza en false hasta que el compositor le da foco): solo true → false.
-        let wasActive = false
-        self.connect("notify::is-active", () => {
-          if (self.is_active) {
-            wasActive = true
-          } else if (wasActive) {
-            wasActive = false
-            self.visible = false
-          }
-        })
-
-        const ctrl = new Gtk.EventControllerKey()
-        ctrl.connect("key-pressed", (_c: Gtk.EventControllerKey, keyval: number) => {
-          if (keyval === Gdk.KEY_Escape) self.visible = false
-          return false
-        })
-        self.add_controller(ctrl)
-      }}
-    >
-      <box class="popup-root" orientation={Gtk.Orientation.VERTICAL} spacing={8}
-        widthRequest={POPUP_WIDTH}
-      >
-        <label class="audio-title" label="Salida" halign={Gtk.Align.START} />
-        <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
-          <For each={speakers}>
-            {(device: Wp.Endpoint) => <DeviceRow device={device} />}
-          </For>
-        </box>
-        <box orientation={Gtk.Orientation.VERTICAL}>
-          <With value={defaultEndpoint}>
-            {(ep: Wp.Endpoint | null) => ep
-              ? <VolumeControl node={ep} />
-              : <label class="audio-empty" label="Audio no disponible" halign={Gtk.Align.START} />}
-          </With>
-        </box>
-
-        <label class="audio-title audio-title-apps" label="Aplicaciones" halign={Gtk.Align.START} />
-        <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
-          <For each={streams}>
-            {(stream: Wp.Stream) => <StreamRow stream={stream} />}
-          </For>
-        </box>
-        <label class="audio-empty" label="Nada reproduciendo" halign={Gtk.Align.START}
-          visible={streams.as(l => l.length === 0)} />
+    // Cada vez que se abre (clic o `ags toggle`) se confirma cuál es la salida por defecto real:
+    // AstalWp no avisa de los cambios hechos desde fuera del popup.
+    <Popup name="audio-popup" class="AudioPopup" width={POPUP_WIDTH} onShow={refreshDefault}>
+      <label class="audio-title" label="Salida" halign={Gtk.Align.START} />
+      <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
+        <For each={speakers}>
+          {(device: Wp.Endpoint) => <DeviceRow device={device} />}
+        </For>
       </box>
-    </window>
+      <box orientation={Gtk.Orientation.VERTICAL}>
+        <With value={defaultEndpoint}>
+          {(ep: Wp.Endpoint | null) => ep
+            ? <VolumeControl node={ep} />
+            : <label class="audio-empty" label="Audio no disponible" halign={Gtk.Align.START} />}
+        </With>
+      </box>
+
+      <label class="audio-title audio-title-apps" label="Aplicaciones" halign={Gtk.Align.START} />
+      <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
+        <For each={streams}>
+          {(stream: Wp.Stream) => <StreamRow stream={stream} />}
+        </For>
+      </box>
+      <label class="audio-empty" label="Nada reproduciendo" halign={Gtk.Align.START}
+        visible={streams.as(l => l.length === 0)} />
+    </Popup>
   )
 }

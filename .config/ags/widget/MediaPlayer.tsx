@@ -1,12 +1,12 @@
-import app from "ags/gtk4/app"
-import { Astal, Gtk, Gdk } from "ags/gtk4"
+import { Astal, Gtk } from "ags/gtk4"
 import { createPoll } from "ags/time"
 import Pango from "gi://Pango"
+import { Popup } from "./Popup"
 import { spotify, mediaState } from "./mpris"
 
 // ── Ventana popup — carátula grande + controles completos ────────────────────
 // Se abre/cierra con clic en la píldora central (BottomBar.tsx), Esc, o clic afuera
-// (se cierra solo al perder el foco — ver notify::is-active más abajo).
+// (se cierra solo al perder el foco). La ventana y su cierre son de Popup.tsx.
 //
 // IMPORTANTE sobre seek/volumen: cada asignación a spotify.position / spotify.volume
 // es una llamada D-Bus real y separada a Spotify (lo verifiqué con busctl monitor).
@@ -44,124 +44,84 @@ export default function MediaPlayer() {
   let pendingVolume = 0
 
   return (
-    <window
-      name="media-popup"
-      class="MediaPlayer"
-      visible={false}
-      application={app}
-      keymode={Astal.Keymode.ON_DEMAND}
-      $={(self) => {
-        // anchor/marginTop se fijan acá, no como prop del constructor: pasar anchor en las
-        // props iniciales del <window> hacía que Gtk.Application nunca registrara la ventana
-        // (app.toggle_window fallaba con "no window registered"). Verificado — el antiguo popup
-        // de calendario, que no tenía anchor, sí se registraba bien.
-        //
-        // Orden importa: margin ANTES que anchor (si no, el margen queda ignorado). Verificado
-        // con hyprctl layers: Hyprland ya descuenta la zona exclusiva de la barra (exclusivity:
-        // EXCLUSIVE) del área disponible, así que este valor ES directamente el gap visual entre
-        // el popup y la barra — no hay que sumarle el alto de la barra ni su propio margin.
-        // Barra arriba → popup anclado arriba también, para que aparezca justo debajo de ella.
-        self.marginTop = 5   // gap visual real entre el popup y la barra
-        self.anchor = Astal.WindowAnchor.TOP
-
-        // Se cierra solo al perder el foco (clic afuera) — así no queda interrumpiendo en pantalla.
-        // El guard wasActive evita cerrarlo apenas se abre (is-active empieza en false de forma
-        // async antes de que el compositor le dé foco; solo cerramos en la transición true → false).
-        let wasActive = false
-        self.connect("notify::is-active", () => {
-          if (self.is_active) {
-            wasActive = true
-          } else if (wasActive) {
-            wasActive = false
-            self.visible = false
-          }
-        })
-
-        const ctrl = new Gtk.EventControllerKey()
-        ctrl.connect("key-pressed", (_c: Gtk.EventControllerKey, keyval: number) => {
-          if (keyval === Gdk.KEY_Escape) self.visible = false
-          return false
-        })
-        self.add_controller(ctrl)
-      }}
+    <Popup name="media-popup" class="MediaPlayer" anchor="top-center"
+      orientation={Gtk.Orientation.HORIZONTAL} spacing={16}
     >
-      <box class="popup-root" spacing={16}>
-        <box class="media-popup-cover" vexpand
-          css={mediaState.as(m => m.cover ? `background-image: url("file://${m.cover}");` : "")}
-        >
-          <label class="media-popup-cover-fallback" label=""
-            halign={Gtk.Align.CENTER} valign={Gtk.Align.CENTER} hexpand vexpand
-            visible={mediaState.as(m => !m.cover)} />
+      <box class="media-popup-cover" vexpand
+        css={mediaState.as(m => m.cover ? `background-image: url("file://${m.cover}");` : "")}
+      >
+        <label class="media-popup-cover-fallback" label=""
+          halign={Gtk.Align.CENTER} valign={Gtk.Align.CENTER} hexpand vexpand
+          visible={mediaState.as(m => !m.cover)} />
+      </box>
+
+      <box class="media-popup-info" orientation={Gtk.Orientation.VERTICAL} spacing={8}
+        valign={Gtk.Align.CENTER} vexpand hexpand
+      >
+        <label class="media-popup-title" label={mediaState.as(m => m.title)}
+          halign={Gtk.Align.START} maxWidthChars={22} ellipsize={Pango.EllipsizeMode.END} />
+        <label class="media-popup-artist" label={mediaState.as(m => m.artist)}
+          halign={Gtk.Align.START} maxWidthChars={22} ellipsize={Pango.EllipsizeMode.END} />
+
+        <box class="media-popup-controls" spacing={10} halign={Gtk.Align.CENTER} hexpand>
+          <button
+            class={mediaState.as(m => m.shuffle ? "media-popup-btn active" : "media-popup-btn")}
+            onClicked={() => spotify.shuffle()}
+          >
+            <label label="" />
+          </button>
+          <button class="media-popup-btn" onClicked={() => spotify.previous()}>
+            <label label="󰙤" />
+          </button>
+          <button class="media-popup-btn media-popup-btn-play"
+            onClicked={() => spotify.play_pause()}
+          >
+            <label label={mediaState.as(m => m.playing ? "" : "")} />
+          </button>
+          <button class="media-popup-btn" onClicked={() => spotify.next()}>
+            <label label="󰙢" />
+          </button>
         </box>
 
-        <box class="media-popup-info" orientation={Gtk.Orientation.VERTICAL} spacing={8}
-          valign={Gtk.Align.CENTER} vexpand hexpand
-        >
-          <label class="media-popup-title" label={mediaState.as(m => m.title)}
-            halign={Gtk.Align.START} maxWidthChars={22} ellipsize={Pango.EllipsizeMode.END} />
-          <label class="media-popup-artist" label={mediaState.as(m => m.artist)}
-            halign={Gtk.Align.START} maxWidthChars={22} ellipsize={Pango.EllipsizeMode.END} />
+        <box class="media-popup-volume-row" spacing={8} valign={Gtk.Align.CENTER}>
+          <label class="media-popup-vol-icon" label={mediaState.as(m => volIcon(m.volume))}
+            valign={Gtk.Align.CENTER} />
+          <slider class="media-popup-volume" hexpand valign={Gtk.Align.CENTER}
+            min={0} max={1}
+            value={mediaState.as(m => m.volume)}
+            onValueChanged={(self: Astal.Slider) => { pendingVolume = self.value }}
+            $={(self: Astal.Slider) => {
+              const click = new Gtk.GestureClick()
+              click.connect("released", () => {
+                spotify.volume = pendingVolume   // una sola escritura real, al soltar
+              })
+              self.add_controller(click)
+            }}
+          />
+        </box>
 
-          <box class="media-popup-controls" spacing={10} halign={Gtk.Align.CENTER} hexpand>
-            <button
-              class={mediaState.as(m => m.shuffle ? "media-popup-btn active" : "media-popup-btn")}
-              onClicked={() => spotify.shuffle()}
-            >
-              <label label="" />
-            </button>
-            <button class="media-popup-btn" onClicked={() => spotify.previous()}>
-              <label label="󰙤" />
-            </button>
-            <button class="media-popup-btn media-popup-btn-play"
-              onClicked={() => spotify.play_pause()}
-            >
-              <label label={mediaState.as(m => m.playing ? "" : "")} />
-            </button>
-            <button class="media-popup-btn" onClicked={() => spotify.next()}>
-              <label label="󰙢" />
-            </button>
-          </box>
-
-          <box class="media-popup-volume-row" spacing={8} valign={Gtk.Align.CENTER}>
-            <label class="media-popup-vol-icon" label={mediaState.as(m => volIcon(m.volume))}
-              valign={Gtk.Align.CENTER} />
-            <slider class="media-popup-volume" hexpand valign={Gtk.Align.CENTER}
-              min={0} max={1}
-              value={mediaState.as(m => m.volume)}
-              onValueChanged={(self: Astal.Slider) => { pendingVolume = self.value }}
-              $={(self: Astal.Slider) => {
-                const click = new Gtk.GestureClick()
-                click.connect("released", () => {
-                  spotify.volume = pendingVolume   // una sola escritura real, al soltar
-                })
-                self.add_controller(click)
-              }}
-            />
-          </box>
-
-          <box class="media-popup-seek-row" spacing={6} valign={Gtk.Align.CENTER}>
-            <label class="media-popup-time" label={position.as(formatTime)}
-              valign={Gtk.Align.CENTER} />
-            <slider class="media-popup-seek" hexpand valign={Gtk.Align.CENTER}
-              min={0}
-              max={mediaState.as(m => Math.max(m.length, 1))}
-              value={position}
-              onValueChanged={(self: Astal.Slider) => { pendingSeek = self.value }}
-              $={(self: Astal.Slider) => {
-                const click = new Gtk.GestureClick()
-                click.connect("pressed", () => { seeking = true })
-                click.connect("released", () => {
-                  seeking = false
-                  spotify.position = pendingSeek   // recién ahora se manda el Seek real, una sola vez
-                })
-                self.add_controller(click)
-              }}
-            />
-            <label class="media-popup-time" label={mediaState.as(m => formatTime(m.length))}
-              valign={Gtk.Align.CENTER} />
-          </box>
+        <box class="media-popup-seek-row" spacing={6} valign={Gtk.Align.CENTER}>
+          <label class="media-popup-time" label={position.as(formatTime)}
+            valign={Gtk.Align.CENTER} />
+          <slider class="media-popup-seek" hexpand valign={Gtk.Align.CENTER}
+            min={0}
+            max={mediaState.as(m => Math.max(m.length, 1))}
+            value={position}
+            onValueChanged={(self: Astal.Slider) => { pendingSeek = self.value }}
+            $={(self: Astal.Slider) => {
+              const click = new Gtk.GestureClick()
+              click.connect("pressed", () => { seeking = true })
+              click.connect("released", () => {
+                seeking = false
+                spotify.position = pendingSeek   // recién ahora se manda el Seek real, una sola vez
+              })
+              self.add_controller(click)
+            }}
+          />
+          <label class="media-popup-time" label={mediaState.as(m => formatTime(m.length))}
+            valign={Gtk.Align.CENTER} />
         </box>
       </box>
-    </window>
+    </Popup>
   )
 }

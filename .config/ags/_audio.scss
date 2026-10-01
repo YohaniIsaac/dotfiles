@@ -1,6 +1,6 @@
 // ── Popup de audio (volumen) ────────────────────────────────────────────────────
 // Se abre con clic en el módulo de volumen de la barra. Esc o clic afuera lo cierra.
-// toggleAudioPopup() — ver widget/AudioPopup.tsx
+// togglePopup("audio-popup") — ver widget/AudioPopup.tsx y widget/Popup.tsx
 
 @use './shared' as *;
 
@@ -11,22 +11,9 @@ window.AudioPopup {
 
   // Mismo look que el popup de Spotify: borde sólido + glow + fondo transparente en reposo,
   // más sólido al pasar el mouse (para leer mejor).
-  .popup-root {
-    @include pill-look;
-    padding: 14px;
-    transition: background 200ms ease;
+  .popup-root { @include popup-surface(14px); }
 
-    &:hover {
-      background: rgba($surface, $popup-hover-fill);
-    }
-  }
-
-  .audio-title {
-    font-family: $font;
-    font-size: 11px;
-    font-weight: bold;
-    color: $text-muted;
-  }
+  .audio-title { @include popup-title; }
 
   .audio-title-apps {
     margin-top: 6px;              // aire entre el volumen general y la lista de aplicaciones
@@ -35,15 +22,8 @@ window.AudioPopup {
   // ── Salida: una fila por dispositivo; la activa lleva fondo y check ────────────────────────
 
   .audio-device {
-    background: transparent;
-    border: none;
-    border-radius: $radius-sm;
-    padding: 4px 8px;
-    min-height: 0;
-    min-width: 0;
-    transition: all 150ms ease;
+    @include popup-row;
 
-    &:hover  { background: $surface-high; }
     &.active { background: rgba($primary-dim, 0.3); }
   }
 
@@ -73,17 +53,7 @@ window.AudioPopup {
 
   // ── Control de volumen (volumen general y cada aplicación) ─────────────────────────────────
 
-  .audio-mute {
-    background: transparent;
-    border: none;
-    border-radius: 999px;
-    padding: 2px 6px;
-    min-height: 0;
-    min-width: 0;
-    transition: all 150ms ease;
-
-    &:hover { background: $surface-high; }
-  }
+  .audio-mute { @include popup-icon-button; }
 
   .audio-mute-icon {
     font-family: $font;
@@ -122,9 +92,5 @@ window.AudioPopup {
     .audio-app-name { color: $text-muted; }   // app silenciada: se atenúa
   }
 
-  .audio-empty {
-    font-family: $font;
-    font-size: 11px;
-    color: $text-muted;
-  }
+  .audio-empty { @include popup-hint; }
 }

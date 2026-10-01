@@ -93,3 +93,58 @@ $popup-hover-fill: 0.92;
     margin: 0;            // el tema base trae un margin negativo para desbordar el trough — lo resetea
   }
 }
+
+// ── Mixins de los popups de la barra (audio; el de Spotify usa solo popup-surface) ──────────
+
+// Superficie del popup (.popup-root): look de píldora, transparente en reposo y más sólida al pasar
+// el mouse, para leer mejor. Cada popup pone su padding.
+@mixin popup-surface($padding) {
+  @include pill-look;
+  padding: $padding;
+  transition: background 200ms ease;
+
+  &:hover {
+    background: rgba($surface, $popup-hover-fill);
+  }
+}
+
+// Título de sección dentro de un popup ("Salida", "Aplicaciones").
+@mixin popup-title {
+  font-family: $font;
+  font-size: 11px;
+  font-weight: bold;
+  color: $text-muted;
+}
+
+// Texto de ayuda o de estado vacío ("Nada reproduciendo").
+@mixin popup-hint {
+  font-family: $font;
+  font-size: 11px;
+  color: $text-muted;
+}
+
+// Fila clicable de una lista (dispositivo de salida). Cada lista añade su estado activo (&.active).
+@mixin popup-row {
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  padding: 4px 8px;
+  min-height: 0;
+  min-width: 0;
+  transition: all 150ms ease;
+
+  &:hover { background: $surface-high; }
+}
+
+// Botón redondo de un icono (silenciar).
+@mixin popup-icon-button {
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 2px 6px;
+  min-height: 0;
+  min-width: 0;
+  transition: all 150ms ease;
+
+  &:hover { background: $surface-high; }
+}
