@@ -27,7 +27,10 @@ $border-intensity: 0.35;
 $glow-intensity: 1;
 $glow-size:      4px;
 
-// Opacidad del fondo de los popups (Spotify y audio) cuando el mouse está ENCIMA — más sólido para
+// Color de error (contraseña incorrecta, fallo al conectar): Matugen no genera uno, así que es fijo.
+$error: #ffb4ab;
+
+// Opacidad del fondo de los popups (Spotify, audio y red) cuando el mouse está ENCIMA — más sólido para
 // leer mejor. En reposo usan $fill-intensity (transparente, igual que la barra). 1 = totalmente opaco.
 $popup-hover-fill: 0.92;
 
@@ -94,7 +97,7 @@ $popup-hover-fill: 0.92;
   }
 }
 
-// ── Mixins de los popups de la barra (audio; el de Spotify usa solo popup-surface) ──────────
+// ── Mixins de los popups de la barra (audio y red; el de Spotify usa solo popup-surface) ──────────
 
 // Superficie del popup (.popup-root): look de píldora, transparente en reposo y más sólida al pasar
 // el mouse, para leer mejor. Cada popup pone su padding.
@@ -108,7 +111,7 @@ $popup-hover-fill: 0.92;
   }
 }
 
-// Título de sección dentro de un popup ("Salida", "Aplicaciones").
+// Título de sección dentro de un popup ("Salida", "Aplicaciones", "Wi-Fi").
 @mixin popup-title {
   font-family: $font;
   font-size: 11px;
@@ -116,14 +119,14 @@ $popup-hover-fill: 0.92;
   color: $text-muted;
 }
 
-// Texto de ayuda o de estado vacío ("Nada reproduciendo").
+// Texto de ayuda o de estado vacío ("Nada reproduciendo", "Wi-Fi apagado").
 @mixin popup-hint {
   font-family: $font;
   font-size: 11px;
   color: $text-muted;
 }
 
-// Fila clicable de una lista (dispositivo de salida). Cada lista añade su estado activo (&.active).
+// Fila clicable de una lista (dispositivo de salida, red). Cada lista añade su estado activo (&.active).
 @mixin popup-row {
   background: transparent;
   border: none;
@@ -136,7 +139,7 @@ $popup-hover-fill: 0.92;
   &:hover { background: $surface-high; }
 }
 
-// Botón redondo de un icono (silenciar).
+// Botón redondo de un icono (silenciar, refrescar).
 @mixin popup-icon-button {
   background: transparent;
   border: none;

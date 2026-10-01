@@ -5,12 +5,12 @@ import { createPoll } from "ags/time"
 import { createExternal } from "ags"
 import GLib from "gi://GLib"
 import Hyprland from "gi://AstalHyprland"
-import Network  from "gi://AstalNetwork"
 import Battery  from "gi://AstalBattery"
 import Pango    from "gi://Pango"
 import { spotify, mediaState } from "../mpris"
 import { volState, volumeIcon, scrollVolume } from "../audio"
 import { togglePopup } from "../Popup"
+import { netIcon } from "../network"
 
 const HOME = GLib.get_home_dir()
 const WS_NAV = `${HOME}/.config/hypr/scripts/workspace-nav.sh`
@@ -20,7 +20,6 @@ const WS_NAV = `${HOME}/.config/hypr/scripts/workspace-nav.sh`
 
 const hypr    = Hyprland.get_default()!
 // El servicio de audio (AstalWp) vive en ../audio: lo comparten el módulo de volumen y el popup.
-const network = Network.get_default()
 const bat     = Battery.get_default()   // null en equipos sin batería
 
 // ── Clock ─────────────────────────────────────────────────────────────────────
@@ -170,34 +169,18 @@ function Volume() {
   )
 }
 
-// ── Red — reactivo via AstalNetwork (NetworkManager) ─────────────────────────
-
-function computeNetIcon(): string {
-  switch (network.primary) {
-    case Network.Primary.WIRED: return "󰈀"
-    case Network.Primary.WIFI:  return "󰤨"
-    default:                    return "󰤭"
-  }
-}
-
-const netIcon = createExternal<string>(
-  computeNetIcon(),
-  (set) => {
-    const refresh = () => set(computeNetIcon())
-    const ids = [
-      network.connect("notify::primary", refresh),
-      network.connect("notify::wifi",    refresh),
-      network.connect("notify::wired",   refresh),
-    ]
-    return () => ids.forEach(id => network.disconnect(id))
-  }
-)
+// ── Red — estado en widget/network.ts (NetworkManager vía libnm) ──────────────
+// Clic = popup de red con el interruptor de Wi-Fi, las redes cercanas y el estado de Ethernet
+// (widget/NetworkPopup.tsx). El icono muestra la intensidad de la señal, o el cable si la
+// conexión primaria es Ethernet.
 
 function NetworkWidget() {
   return (
-    <box class="sys-module" valign={Gtk.Align.CENTER}>
-      <label class="sys-icon" label={netIcon} />
-    </box>
+    <button class="sys-btn" onClicked={(self: Gtk.Button) => togglePopup("network-popup", self)}>
+      <box class="sys-module" valign={Gtk.Align.CENTER}>
+        <label class="sys-icon" label={netIcon} />
+      </box>
+    </button>
   )
 }
 

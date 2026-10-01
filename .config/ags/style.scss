@@ -4,8 +4,10 @@
 //   _bar.scss         → barra inferior (reloj, workspaces, sistema)
 //   _mediaplayer.scss → popup del reproductor (Spotify)
 //   _audio.scss       → popup de audio (salida, volumen general y por aplicación)
+//   _network.scss     → popup de red (interruptor de Wi-Fi, redes cercanas y Ethernet)
 //   colors.scss       → colores Matugen (no editar manualmente)
 
 @use './bar';
 @use './mediaplayer';
 @use './audio';
+@use './network';

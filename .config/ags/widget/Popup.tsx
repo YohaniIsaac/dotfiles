@@ -2,7 +2,7 @@ import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 
 // ── Popups de la barra — ventana layer-shell + colocación bajo un módulo ─────────────────────
-// Lo comparten MediaPlayer.tsx y AudioPopup.tsx: la ventana (anclaje, cierre con
+// Lo comparten MediaPlayer.tsx, AudioPopup.tsx y NetworkPopup.tsx: la ventana (anclaje, cierre con
 // Esc o al perder el foco) y, para los que se abren desde un módulo de la barra, dónde aparecen.
 // Cada popup solo aporta su contenido.
 //
@@ -22,6 +22,11 @@ type PopupProps = {
   class: string                         // clase CSS de la ventana
   anchor?: "top-right" | "top-center"   // right: bajo un módulo de la derecha (togglePopup) · center: centrado arriba
   width?: number                        // ancho fijo del contenido
+  // false = la ventana sigue el tamaño natural de su contenido, también cuando crece o se achica después de
+  // abrirse. Una ventana GTK4 "resizable" solo crece hasta el MÍNIMO del contenido: una lista con
+  // ScrolledWindow que se llena tras abrir (las redes llegan con el escaneo, unos segundos después) queda
+  // recortada a su alto mínimo y hay que desplazarse (medido: 58 px de lista con 8 redes disponibles).
+  resizable?: boolean
   orientation?: Gtk.Orientation
   spacing?: number
   onShow?: () => void                   // cada vez que se abre (clic o `ags toggle`)
@@ -31,7 +36,7 @@ type PopupProps = {
 
 export function Popup({
   name, class: cssClass, anchor = "top-right", width, onShow, onHide, children,
-  orientation = Gtk.Orientation.VERTICAL, spacing = 8,
+  resizable = true, orientation = Gtk.Orientation.VERTICAL, spacing = 8,
 }: PopupProps) {
   if (width) widths.set(name, width)
 
@@ -41,6 +46,7 @@ export function Popup({
       class={cssClass}
       visible={false}
       application={app}
+      resizable={resizable}
       keymode={Astal.Keymode.ON_DEMAND}
       $={(self) => {
         // anchor y márgenes se fijan acá y no como props iniciales: con anchor en las props,

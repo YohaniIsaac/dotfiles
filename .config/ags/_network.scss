@@ -1,0 +1,190 @@
+// ── Popup de red (Wi-Fi y Ethernet) ─────────────────────────────────────────────
+// Se abre con clic en el módulo de red de la barra. Esc o clic afuera lo cierra.
+// togglePopup("network-popup") — ver widget/NetworkPopup.tsx y widget/Popup.tsx
+
+@use './shared' as *;
+
+window.NetworkPopup {
+  background: transparent;
+
+  > * { background: transparent; }
+
+  // Mismo look que los popups de audio y Spotify.
+  .popup-root { @include popup-surface(14px); }
+
+  .net-title { @include popup-title; }
+  .net-hint  { @include popup-hint; padding: 4px 8px; }
+
+  // ── Ethernet: una fila de estado (no se toca) ──────────────────────────────────────────────
+
+  .net-eth { padding: 2px 8px 6px; }
+
+  .net-eth-icon {
+    font-family: $font;
+    font-size: 14px;
+    color: $text-muted;
+  }
+
+  .net-eth-name {
+    font-family: $font;
+    font-size: 12px;
+    font-weight: bold;
+    color: $text;
+  }
+
+  .net-eth-status {
+    font-family: $font;
+    font-size: 11px;
+    color: $text-muted;
+  }
+
+  .net-eth.connected {
+    .net-eth-icon   { color: $primary; }
+    .net-eth-status { color: $text; }
+  }
+
+  // ── Cabecera del Wi-Fi: título, buscar e interruptor ───────────────────────────────────────
+
+  .net-head { padding: 0 2px 2px 0; }
+
+  .net-refresh { @include popup-icon-button; }
+
+  .net-refresh-icon {
+    font-family: $font;
+    font-size: 14px;
+    color: $primary;
+  }
+
+  .net-spinner {
+    min-width: 16px;
+    min-height: 16px;
+    color: $primary;
+  }
+
+  switch {
+    background: $surface-high;
+    border: none;
+    border-radius: 999px;
+    min-width: 38px;
+    min-height: 20px;
+    transition: background 150ms ease;
+
+    &:checked { background: $primary-dim; }
+
+    slider {
+      background: $text;
+      border: none;
+      border-radius: 999px;
+      min-width: 14px;
+      min-height: 14px;
+      margin: 3px;
+    }
+  }
+
+  // ── Lista de redes ─────────────────────────────────────────────────────────────────────────
+
+  .net-scroll { background: transparent; }
+
+  .net-row {
+    @include popup-row;
+
+    &.active { background: rgba($primary-dim, 0.3); }
+  }
+
+  .net-icon {
+    font-family: $font;
+    font-size: 14px;
+    color: $primary;
+  }
+
+  .net-name {
+    font-family: $font;
+    font-size: 12px;
+    color: $text;
+  }
+
+  .net-row.active .net-name { font-weight: bold; }
+
+  .net-tag { @include popup-hint; }
+
+  .net-check {
+    font-family: $font;
+    font-size: 12px;
+    color: $primary;
+  }
+
+  .net-disconnect {
+    @include popup-row;
+    padding: 2px 8px;
+
+    label {
+      font-family: $font;
+      font-size: 11px;
+      color: $text-muted;
+    }
+
+    &:hover label { color: $text; }
+  }
+
+  // Campo de contraseña en línea, bajo la red elegida.
+  .net-auth { padding: 2px 8px 4px; }
+
+  .net-password {
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-sm;
+    color: $text;
+    font-family: $font;
+    font-size: 12px;
+    min-height: 0;
+    padding: 4px 8px;
+
+    &:focus-within { border-color: rgba($primary, 0.7); }
+  }
+
+  .net-connect {
+    background: rgba($primary-dim, 0.6);
+    border: none;
+    border-radius: $radius-sm;
+    min-height: 0;
+    padding: 4px 10px;
+    transition: all 150ms ease;
+
+    label {
+      font-family: $font;
+      font-size: 12px;
+      color: $text;
+    }
+
+    &:hover { background: $primary-dim; }
+  }
+
+  .net-error {
+    font-family: $font;
+    font-size: 11px;
+    color: $error;
+    padding: 0 10px 4px;
+  }
+
+  // ── Pie ────────────────────────────────────────────────────────────────────────────────────
+
+  .net-sep {
+    min-height: 1px;
+    background: $border;
+    margin: 4px 0 2px;
+  }
+
+  .net-advanced { @include popup-row; }
+
+  .net-advanced-icon {
+    font-family: $font;
+    font-size: 13px;
+    color: $text-muted;
+  }
+
+  .net-advanced-text {
+    font-family: $font;
+    font-size: 12px;
+    color: $text;
+  }
+}
