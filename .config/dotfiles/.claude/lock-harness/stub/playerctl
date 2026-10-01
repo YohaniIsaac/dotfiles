@@ -1,0 +1,23 @@
+#!/bin/bash
+shopt -u patsub_replacement 2>/dev/null
+# playerctl falso para el arnés: STUB_MODE=none|long|playing|amp|acentos  (sin tocar el reproductor real)
+mode="${STUB_MODE:-none}"
+args="$*"
+case "$1" in
+  -l) [ "$mode" = none ] || echo "stubplayer.instance123" ; exit 0 ;;
+esac
+[ "$mode" = none ] && exit 1
+if [[ "$args" == *" status"* ]]; then echo Playing; exit 0; fi
+if [[ "$args" == *"--format"* ]]; then
+  fmt="${args##*--format }"
+  case "$mode" in
+    long)    title='Una canción con un título larguísimo & <raro> de verdad'; artist='Un artista con nombre muy largo y simultáneamente absurdo' ;;
+    playing) title='Illusions of Depth'; artist='Project AER' ;;
+    acentos) title='Él Ángel Ñandú Ópera'; artist='Édith Piaf Ángeles' ;;
+    amp)     title='AC/DC & <Co> "x"'; artist='A&B' ;;
+  esac
+  fmt=${fmt//\{\{title\}\}/$title}; fmt=${fmt//\{\{artist\}\}/$artist}
+  fmt=${fmt//\{\{playerName\}\}/stubplayer}; fmt=${fmt//\{\{mpris:artUrl\}\}/}
+  echo "$fmt"; exit 0
+fi
+exit 1
