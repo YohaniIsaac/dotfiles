@@ -458,7 +458,11 @@ function PowerButton() {
       $={(self) => {
         const rc = new Gtk.GestureClick()
         rc.set_button(3)
-        rc.connect("pressed", () => execAsync("hyprlock").catch(() => {}))
+        // Por hyprctl dispatch exec para que el bloqueador sea hijo de Hyprland y no de este proceso: si la
+        // barra se reinicia con la sesión bloqueada, su stdout (un pipe nuestro) se cerraría y SIGPIPE
+        // mataría a hyprlock. lock.sh además evita duplicados y zombis.
+        rc.connect("pressed", () =>
+          execAsync(["hyprctl", "dispatch", "exec", `${HOME}/.config/hypr/scripts/lock.sh`]).catch(() => {}))
         self.add_controller(rc)
       }}
     >
