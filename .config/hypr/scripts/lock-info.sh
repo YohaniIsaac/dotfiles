@@ -8,16 +8,25 @@
 #
 #   prepare                        lo llama lock.sh justo antes de lanzar hyprlock: fondo, avatar
 #                                  y refresco del clima (si la caché tiene más de 20 min)
-#   weekday | date                 "JUEVES" · "1 de octubre de 2026" (a mano: el locale es en_US)
-#   (weekday, p-title y p-artist aceptan un factor de relleno de línea: $lock_pad del preset de fuente)
+#   dateline <color> <color>       "Thursday, 01 October" en inglés y en dos colores (día de la semana
+#                                  y resto); los colores son $variables de Matugen entre comillas simples
+#                                  (la hora grande no pasa por aquí: son dos `date +%H` / `date +%M` en
+#                                  hyprlock.conf, que cuestan la mitad que lanzar este script cada segundo)
 #   w-icon | w-temp | w-desc | w-range    clima, leído de la caché
 #   p-title | p-artist | p-meta | p-idle | p-cover   reproductor (playerctl)
+#                                  (p-title y p-artist aceptan un factor de relleno de línea: $lock_pad
+#                                  del preset de fuente)
+#   batt-pct | batt-status | batt-icon | batt-bar   batería (sysfs); los colores, igual que dateline
 #   refresh | fetch-cover          uso interno (se lanzan desacoplados)
 #
 # Archivos locales (no se versionan; el repo es público):
 #   ~/.config/hypr/weather.conf   ubicación del clima: LOCATION=<ciudad>  COUNTRY=<CL…>  (o LAT= y LON=)
 #   ~/.face                       avatar (cualquier imagen; se recorta al centro en un cuadrado)
 # Caché: ~/.cache/hyprlock (fondo, avatar, clima, portadas).
+#
+# Para probar: LOCK_INFO_PSDIR=<carpeta> sustituye a /sys/class/power_supply (estados de batería
+# inventados). La fecha y la hora se fijan con el `date` falso del arnés (lock-harness/stub/date, que
+# lee LOCK_INFO_NOW = segundos de la época) poniendo su carpeta la primera en el PATH.
 #
 # Clima: Open-Meteo (https://open-meteo.com, datos CC BY 4.0, gratis sin clave para uso no
 # comercial). La caché se considera válida 3 h; pasado eso no se muestra nada antes que un dato viejo.
@@ -51,6 +60,23 @@ lh_wrap() {  # <factor> <texto>
   fi
 }
 
+# Un color de hyprlang ("rgba(rrggbbaa)" o "rgb(rrggbb)": lo que deja una $variable de colors.conf)
+# → "#rrggbb" ("#rrggbbaa" si no es opaco) para Pango; vacío si no se entiende. En el cmd[...] de
+# hyprlock.conf hay que pasarlo entre comillas simples: lleva paréntesis.
+pango_color() {
+  local c=${1//[[:space:]]/}
+  c=${c#rgba(}; c=${c#rgb(}; c=${c%)}; c=${c#\#}
+  [[ $c =~ ^[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$ ]] || return 0
+  [[ ${#c} == 8 && ${c:6:2} == [fF][fF] ]] && c=${c:0:6}
+  printf '#%s' "$c"
+}
+
+# <texto> <color>: el texto con ese color (o tal cual si no hay color válido)
+paint() {
+  local c; c=$(pango_color "${2:-}")
+  if [[ -n $c ]]; then printf '<span foreground="%s">%s</span>' "$c" "$1"; else printf '%s' "$1"; fi
+}
+
 urldecode() { local s=${1//+/ }; printf '%b' "${s//%/\\x}"; }
 
 # Glifos Nerd Font (Material Design Icons) como bytes UTF-8, para no depender del locale.
@@ -67,6 +93,13 @@ G_STORM=$'\xf3\xb0\x99\xbe'      # weather-lightning-rainy
 G_NOTE=$'\xf3\xb0\x8e\x87'       # music-note
 G_PLAY=$'\xf3\xb0\x90\x8a'
 G_PAUSE=$'\xf3\xb0\x8f\xa4'
+G_FLASH=$'\xf3\xb0\x89\x81'      # flash (cargando)
+G_PLUG=$'\xf3\xb0\x9a\xa5'       # power-plug (a la corriente, sin batería)
+G_BAT_UNKNOWN=$'\xf3\xb0\x82\x91'
+G_BAT_ALERT=$'\xf3\xb0\x82\x83'
+# battery-10 … battery-90 y battery (llena), de 10 en 10 %
+G_BAT=($'\xf3\xb0\x81\xba' $'\xf3\xb0\x81\xbb' $'\xf3\xb0\x81\xbc' $'\xf3\xb0\x81\xbd' $'\xf3\xb0\x81\xbe'
+       $'\xf3\xb0\x81\xbf' $'\xf3\xb0\x82\x80' $'\xf3\xb0\x82\x81' $'\xf3\xb0\x82\x82' $'\xf3\xb0\x81\xb9')
 
 ensure_transparent() {
   [[ -f $cache/transparent.png ]] || magick -size 8x8 xc:none "png32:$cache/transparent.png" 2>/dev/null
@@ -74,17 +107,14 @@ ensure_transparent() {
 
 # ── Fecha ─────────────────────────────────────────────────────────────────────────────────────
 
-WEEKDAYS=(DOMINGO LUNES MARTES MIÉRCOLES JUEVES VIERNES SÁBADO)
-MONTHS=(enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre)
+# La fecha va siempre en inglés, sea cual sea el idioma del sistema: con LC_ALL=C `date` da los
+# nombres en inglés sin depender de qué locales haya generados.
 
-# LOCK_INFO_NOW (segundos desde la época) fija la fecha: solo para probar días y meses largos.
-now_date() { date ${LOCK_INFO_NOW:+-d "@$LOCK_INFO_NOW"} "$@"; }
-
-cmd_weekday() { lh_wrap "${1:-0}" "${WEEKDAYS[$(now_date +%w)]}"; }
-cmd_date() {
-  local d m y
-  read -r d m y < <(now_date '+%-d %-m %Y')
-  printf '%s de %s de %s' "$d" "${MONTHS[m-1]}" "$y"
+# "Thursday, 01 October": el día de la semana con el primer color y el resto con el segundo
+cmd_dateline() {
+  local wd d m
+  read -r wd d m < <(LC_ALL=C date '+%A %d %B')
+  printf '%s %s' "$(paint "$wd," "${1:-}")" "$(paint "$d $m" "${2:-}")"
 }
 
 # ── Clima ─────────────────────────────────────────────────────────────────────────────────────
@@ -197,6 +227,14 @@ cmd_w_desc() {
 # Un reproductor colgado no puede bloquear el hilo que hyprlock usa para actualizar todas las etiquetas.
 pc() { timeout 2 playerctl "$@"; }
 
+# Cinco etiquetas por pantalla preguntaban cada 3 s, cada una con varias llamadas a playerctl (~35 ms
+# cada una): medido, 84 ms de CPU por segundo y pantalla (unos 250 con tres) con el bloqueo puesto.
+# Ahora el estado se guarda en un archivo ($cache/player.state) que refresca el primero que lo
+# encuentra viejo (más de PLAYER_TTL s) con una sola consulta de metadatos, y los demás solo lo
+# leen: 33 ms por segundo y pantalla, y el refresco se comparte entre todas.
+PLAYER_TTL=2
+pfile="$cache/player.state"
+
 P="" PS=""
 pick_player() {   # primero uno que esté sonando; si no, uno en pausa
   local p s paused=""
@@ -208,50 +246,81 @@ pick_player() {   # primero uno que esté sonando; si no, uno en pausa
   [[ -n $paused ]] && { P=$paused; PS=Paused; return 0; }
   return 1
 }
-meta() { pc -p "$P" metadata --format "$1" 2>/dev/null; }
 
-cmd_p_title() {
-  local lh=${1:-0}
-  pick_player || { lh_wrap "$lh" '<span alpha="55%">Nada en reproducción</span>'; return 0; }
-  local t; t=$(meta '{{title}}'); [[ -n $t ]] || t="Sin título"
-  lh_wrap "$lh" "$(esc "$(trunc "$t" 22)")"
-}
-cmd_p_artist() {
-  pick_player || return 0
-  local a; a=$(meta '{{artist}}')
-  [[ -n $a ]] && lh_wrap "${1:-0}" "$(esc "$(trunc "$a" 26)")"
-  return 0
-}
-cmd_p_meta() {
-  pick_player || return 0
-  local app glyph=$G_PLAY; [[ $PS == Paused ]] && glyph=$G_PAUSE
-  app=$(meta '{{playerName}}'); app=${app%%.*}
-  printf '%s  %s' "$glyph" "$(esc "${app^}")"
-}
-cover_path() {   # ruta de la portada si ya está lista (si no, la descarga aparte y falla)
-  pick_player || return 1
-  local url f key out
-  url=$(meta '{{mpris:artUrl}}')
+# Ruta de la portada si ya está lista (si no, la descarga aparte y devuelve vacío)
+cover_of() {   # <url de mpris:artUrl>
+  local url=$1 f key out
   case $url in
     file://*)
       f=$(urldecode "${url#file://}")
-      [[ -f $f ]] && { printf '%s' "$f"; return 0; } ;;
+      [[ -f $f ]] && printf '%s' "$f" ;;
     http://*|https://*)
       key=$(printf '%s' "$url" | sha1sum | cut -c1-16)
       out="$cache/covers/$key.jpg"
-      [[ -f $out ]] && { printf '%s' "$out"; return 0; }
-      setsid -f "$0" fetch-cover "$url" "$out" >/dev/null 2>&1 </dev/null ;;
+      if [[ -f $out ]]; then printf '%s' "$out"
+      else setsid -f "$0" fetch-cover "$url" "$out" 6>&- >/dev/null 2>&1 </dev/null
+      fi ;;
   esac
-  return 1
+  return 0
+}
+
+# Una línea por dato: hora, estado (vacío = sin reproductor), título, artista, aplicación, portada.
+# Los separa un \x1f en la consulta; un salto de línea dentro de un título se vuelve espacio.
+pstate_refresh() {
+  local sep=$'\x1f' out title="" artist="" app="" url="" cover=""
+  P="" PS=""
+  if pick_player; then
+    out=$(pc -p "$P" metadata --format "{{title}}$sep{{artist}}$sep{{playerName}}$sep{{mpris:artUrl}}" 2>/dev/null)
+    out=${out//$'\n'/ }
+    IFS=$sep read -r title artist app url <<<"$out"
+    cover=$(cover_of "$url")
+  fi
+  printf '%s\n' "$EPOCHSECONDS" "$PS" "$title" "$artist" "$app" "$cover" > "$pfile.$$" && mv -f "$pfile.$$" "$pfile"
+}
+
+PST=()
+pstate_fresh() { mapfile -t PST 2>/dev/null < "$pfile" && [[ ${PST[0]:-} =~ ^[0-9]+$ ]] && (( EPOCHSECONDS - PST[0] < PLAYER_TTL )); }
+
+# Deja el estado en PST ([1] estado, [2] título, [3] artista, [4] aplicación, [5] portada). Si está
+# viejo, uno solo lo refresca (flock) y el resto espera a que termine y lo lee.
+pstate() {
+  pstate_fresh && return 0
+  exec 6>"$cache/player.lock"
+  if flock -w 3 6; then
+    pstate_fresh || { pstate_refresh; pstate_fresh; }
+  fi
+  exec 6>&-
+  return 0
+}
+
+cmd_p_title() {
+  local lh=${1:-0} t
+  pstate
+  [[ -n ${PST[1]:-} ]] || { lh_wrap "$lh" '<span alpha="55%">Nada en reproducción</span>'; return 0; }
+  t=${PST[2]:-}; [[ -n $t ]] || t="Sin título"
+  lh_wrap "$lh" "$(esc "$(trunc "$t" 22)")"
+}
+cmd_p_artist() {
+  pstate
+  [[ -n ${PST[1]:-} && -n ${PST[3]:-} ]] && lh_wrap "${1:-0}" "$(esc "$(trunc "${PST[3]}" 26)")"
+  return 0
+}
+cmd_p_meta() {
+  pstate
+  [[ -n ${PST[1]:-} ]] || return 0
+  local app=${PST[4]:-} glyph=$G_PLAY; [[ ${PST[1]} == Paused ]] && glyph=$G_PAUSE
+  app=${app%%.*}
+  printf '%s  %s' "$glyph" "$(esc "${app^}")"
 }
 
 # La nota musical ocupa el sitio de la portada cuando no hay reproductor o todavía no hay portada
 # (un navegador no suele traerla); la portada, que va encima, la tapa en cuanto llega.
-cmd_p_idle() { cover_path >/dev/null || printf '%s' "$G_NOTE"; return 0; }
+cmd_p_idle() { pstate; [[ -n ${PST[5]:-} ]] || printf '%s' "$G_NOTE"; return 0; }
 
 cmd_p_cover() {
   ensure_transparent
-  cover_path || printf '%s' "$cache/transparent.png"
+  pstate
+  if [[ -n ${PST[5]:-} && -f ${PST[5]} ]]; then printf '%s' "${PST[5]}"; else printf '%s' "$cache/transparent.png"; fi
 }
 
 cmd_fetch_cover() {   # <url> <destino>: descarga y deja la portada cuadrada
@@ -263,6 +332,96 @@ cmd_fetch_cover() {   # <url> <destino>: descarga y deja la portada cuadrada
     && mv "$out.part.jpg" "$out"
   rm -f "$tmp" "$out.lock"
   find "$cache/covers" -type f -mtime +2 -delete 2>/dev/null
+}
+
+# ── Batería (sysfs) ───────────────────────────────────────────────────────────────────────────
+
+psdir=${LOCK_INFO_PSDIR:-/sys/class/power_supply}
+LOW=20          # descargando y con esto o menos: aviso (colores de alerta)
+
+BPCT="" BSTATE=""
+# Deja el porcentaje en BPCT (0-100) y el estado en BSTATE (Charging, Discharging, Full, Not charging o
+# Unknown, tal como los da el kernel). Falla si no hay batería (un sobremesa). Con varias baterías el
+# porcentaje es el de la suma de su energía (o carga), no la media de los porcentajes.
+batt_read() {
+  local b st now full cap n=0 fl=0 nc=0 chg=0 dis=0 sn=0 sf=0 sc=0 ncap=0
+  BPCT="" BSTATE=""
+  for b in "$psdir"/BAT*; do
+    [[ -r $b/status ]] || continue
+    [[ -r $b/present && $(<"$b/present") == 0 ]] && continue
+    n=$((n + 1)); st=$(<"$b/status")
+    case $st in
+      Charging) chg=1 ;; Discharging) dis=1 ;; Full) fl=$((fl + 1)) ;; "Not charging") nc=$((nc + 1)) ;;
+    esac
+    now="" full=""
+    if   [[ -r $b/energy_now && -r $b/energy_full ]]; then now=$(<"$b/energy_now"); full=$(<"$b/energy_full")
+    elif [[ -r $b/charge_now && -r $b/charge_full ]]; then now=$(<"$b/charge_now"); full=$(<"$b/charge_full")
+    fi
+    if [[ $now =~ ^[0-9]+$ && $full =~ ^[0-9]+$ ]] && (( full > 0 )); then
+      sn=$((sn + now)); sf=$((sf + full))
+    elif [[ -r $b/capacity ]]; then
+      cap=$(<"$b/capacity"); [[ $cap =~ ^[0-9]+$ ]] && { sc=$((sc + cap)); ncap=$((ncap + 1)); }
+    fi
+  done
+  (( n > 0 )) || return 1
+  if   (( sf > 0 ));   then BPCT=$(( (sn * 100 + sf / 2) / sf ))
+  elif (( ncap > 0 )); then BPCT=$(( sc / ncap ))
+  else return 1
+  fi
+  (( BPCT > 100 )) && BPCT=100
+  if   (( chg ));            then BSTATE=Charging
+  elif (( dis ));            then BSTATE=Discharging
+  elif (( fl == n ));        then BSTATE=Full
+  elif (( fl + nc == n ));   then BSTATE="Not charging"
+  else BSTATE=Unknown
+  fi
+}
+
+batt_low() { [[ $BSTATE == Discharging ]] && (( BPCT <= LOW )); }
+
+cmd_batt_pct() {   # <color> <color de alerta>; sin batería: "AC"
+  batt_read || { printf 'AC'; return 0; }
+  if batt_low; then paint "$BPCT%" "${2:-}"; else paint "$BPCT%" "${1:-}"; fi
+}
+
+cmd_batt_status() {
+  batt_read || { printf 'No battery'; return 0; }
+  printf '%s' "$BSTATE"
+}
+
+# El icono dice el estado: rayo = cargando; enchufe = a la corriente (llena o sin cargar, o sin batería);
+# batería = descargando (con el nivel; con aviso si es bajo)
+cmd_batt_icon() {   # <color> <color de alerta>
+  local g c=${1:-}
+  if ! batt_read; then g=$G_PLUG
+  else
+    case $BSTATE in
+      Charging)        g=$G_FLASH ;;
+      Full|"Not charging") g=$G_PLUG ;;
+      Discharging)     if batt_low; then g=$G_BAT_ALERT; c=${2:-}; else g=${G_BAT[BPCT / 10 > 9 ? 9 : BPCT / 10]}; fi ;;
+      *)               g=$G_BAT_UNKNOWN ;;
+    esac
+  fi
+  paint "$g" "$c"
+}
+
+# Diez segmentos (de a 10 %) y un hueco en el centro donde va el icono; cada segmento son dos espacios
+# con fondo de color, así que la etiqueta tiene que ser de ancho fijo (monoespaciada).
+cmd_batt_bar() {   # <relleno> <vacío> <relleno de alerta>
+  local fill empty n i c out="" gap=" "
+  fill=$(pango_color "${1:-}"); empty=$(pango_color "${2:-}")
+  if batt_read; then
+    n=$(( (BPCT + 5) / 10 )); (( BPCT > 0 && n < 1 )) && n=1
+    batt_low && [[ -n ${3:-} ]] && fill=$(pango_color "$3")
+  else
+    n=0
+  fi
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    (( i <= n )) && c=$fill || c=$empty
+    out+="<span${c:+ background=\"$c\"}>  </span>"
+    case $i in 5) out+="    " ;; 10) ;; *) out+=$gap ;; esac
+  done
+  printf '%s' "$out"
 }
 
 # ── Preparación (la llama lock.sh) ────────────────────────────────────────────────────────────
@@ -302,8 +461,11 @@ cmd_prepare() {
 
 case ${1:-} in
   prepare)    cmd_prepare ;;
-  weekday)    shift; cmd_weekday "$@" ;;
-  date)       cmd_date ;;
+  dateline)   shift; cmd_dateline "$@" ;;
+  batt-pct)   shift; cmd_batt_pct "$@" ;;
+  batt-status) cmd_batt_status ;;
+  batt-icon)  shift; cmd_batt_icon "$@" ;;
+  batt-bar)   shift; cmd_batt_bar "$@" ;;
   w-icon)     cmd_w_icon ;;
   w-temp)     cmd_w_temp ;;
   w-desc)     cmd_w_desc ;;
@@ -315,5 +477,5 @@ case ${1:-} in
   p-cover)    cmd_p_cover ;;
   refresh)    cmd_refresh ;;
   fetch-cover) shift; cmd_fetch_cover "$@" ;;
-  *) echo "uso: ${0##*/} prepare|weekday|date|w-icon|w-temp|w-desc|w-range|p-title|p-artist|p-meta|p-idle|p-cover" >&2; exit 2 ;;
+  *) echo "uso: ${0##*/} prepare|dateline|batt-pct|batt-status|batt-icon|batt-bar|w-icon|w-temp|w-desc|w-range|p-title|p-artist|p-meta|p-idle|p-cover" >&2; exit 2 ;;
 esac

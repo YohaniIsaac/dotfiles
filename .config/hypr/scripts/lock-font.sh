@@ -31,11 +31,23 @@ families() {
   sed -n 's/^\$lock_font_[a-z]*[[:space:]]*=[[:space:]]*//p' "$1" | sed 's/[[:space:]]*#.*$//; s/[[:space:]]*$//' | sort -u
 }
 
+# "Josefin Sans SemiBold" es la familia "Josefin Sans" con su peso: Pango lo entiende, pero en una fuente
+# variable fontconfig no tiene una familia con ese nombre (en las estáticas, como JetBrainsMono NF Medium,
+# sí). Sin la palabra del peso (y de la cursiva) queda la familia base.
+base_family() {
+  local f=$1
+  f=${f% Italic}; f=${f% Oblique}
+  case ${f##* } in
+    Thin|ExtraLight|UltraLight|Light|Regular|Medium|SemiBold|DemiBold|Bold|ExtraBold|UltraBold|Black|Heavy) f=${f% *} ;;
+  esac
+  printf '%s' "$f"
+}
+
 # Las que fontconfig no conoce (hyprlock/Pango caería a Noto Sans sin avisar)
 missing() {
   local fam
   while IFS= read -r fam; do
-    fc-list -q ":family=$fam" || echo "$fam"
+    fc-list -q ":family=$fam" || fc-list -q ":family=$(base_family "$fam")" || echo "$fam"
   done < <(families "$1")
 }
 
