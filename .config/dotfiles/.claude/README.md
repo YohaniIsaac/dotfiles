@@ -37,6 +37,7 @@ Añadida por Claude el 2026-10-01, al hacer la pantalla de bloqueo.
 | Referencia | Qué es | Stack |
 |---|---|---|
 | [pinkSakoora/sakoora.hyprlock](https://github.com/pinkSakoora/sakoora.hyprlock) | Estilos de hyprlock con instalador: tarjetas redondeadas translúcidas con reloj, fecha, reproductor, red, bluetooth y batería, y scripts para cada widget. **Licencia GPL-3.0: no se copia código.** El `style-1` es el diseño que se tomó de base para `hypr/hyprlock.conf` (tarjetas sobre el fondo desenfocado); el código es propio. | Hyprland, hyprlock |
+| [MrVivekRajan/Hyprlock-Styles](https://github.com/MrVivekRajan/Hyprlock-Styles) | Diez estilos de hyprlock, cada uno un `hyprlock.conf` suelto. **Licencia GPL-3.0: no se copia código.** El `style-7` (hora grande con las horas en un color y los minutos en otro, apiladas y desplazadas) y el `style-8` (la fecha en dos colores) son lo que se tomó para la hora y la fecha de `hypr/hyprlock.conf`, con colores de Matugen; las capturas están en el README del repo. | Hyprland, hyprlock |
 
 ## Audio y ecualizador
 
