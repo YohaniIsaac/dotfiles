@@ -1,4 +1,5 @@
 {
+  "model": "sonnet",
   "statusLine": {
     "type": "command",
     "command": "npx -y @owloops/claude-powerline@latest"
@@ -21,6 +22,9 @@
   "modelSettings": {
     "claude-sonnet-5": {
       "effortLevel": "xhigh"
+    },
+    "claude-sonnet-5-5": {
+      "effortLevel": "medium"
     }
   },
   "theme": "dark",
