@@ -1,0 +1,5 @@
+#!/bin/bash
+# date falso para el arnés: con LOCK_INFO_NOW=<segundos de la época> fija el instante que ve hyprlock
+# (y lock-info.sh); sin la variable, es el date de siempre.
+[ -n "${LOCK_INFO_NOW:-}" ] && exec /usr/bin/date -d "@$LOCK_INFO_NOW" "$@"
+exec /usr/bin/date "$@"

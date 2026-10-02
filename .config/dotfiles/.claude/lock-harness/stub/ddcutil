@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+# ddcutil falso para el arnés: monitores inventados en la carpeta $FAKE_DDC/<bus>/ con los archivos
+# `value` y `max` (y, opcionales, `fail` = nunca responde, `delay` = segundos que tarda cada orden,
+# `asleep_until` = época hasta la que no responde, `readonly` = acepta la orden pero no cambia).
+# Entiende lo que usa lock-dim.sh: [--bus N] [--noverify] getvcp 10 [--terse] | setvcp 10 VALOR.
+# Todas las órdenes quedan en $FAKE_DDC/log. Nunca toca un monitor real.
+import os, sys, time
+
+root = os.environ.get("FAKE_DDC")
+if not root:
+    sys.exit("ddcutil falso: falta FAKE_DDC")
+args = sys.argv[1:]
+bus, terse, pos, i = None, False, [], 0
+while i < len(args):
+    a = args[i]
+    if a == "--bus": i += 1; bus = args[i]
+    elif a == "--terse": terse = True
+    elif a.startswith("-"): pass
+    else: pos.append(a)
+    i += 1
+if bus is None or not pos:
+    sys.exit("ddcutil falso: solo entiende --bus N getvcp|setvcp 10 …")
+d = os.path.join(root, bus)
+
+def rd(name, default=None):
+    try: return open(os.path.join(d, name)).read().strip()
+    except OSError: return default
+
+with open(os.path.join(root, "log"), "a") as f:
+    f.write(f"{time.time():.2f} bus={bus} {' '.join(pos)}\n")
+delay = rd("delay")
+if delay: time.sleep(float(delay))
+until = rd("asleep_until")
+if not os.path.isdir(d) or rd("fail") is not None or (until and time.time() < float(until)):
+    print(f"DDC communication failed for monitor on bus /dev/i2c-{bus}")
+    sys.exit(1)
+cur, mx = int(rd("value", "100")), int(rd("max", "100"))
+if pos[0] == "getvcp":
+    print(f"VCP 10 C {cur} {mx}" if terse else f"VCP code 0x10 (Brightness                    ): current value = {cur:5}, max value = {mx:5}")
+elif pos[0] == "setvcp":
+    new = int(pos[2])
+    if rd("readonly") is None:
+        open(os.path.join(d, "value"), "w").write(str(max(0, min(mx, new))))
+else:
+    sys.exit(2)

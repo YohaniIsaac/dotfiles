@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+# brightnessctl falso para el arnés: una retroiluminación inventada que vive en la carpeta $FAKE_BL
+# (archivos raw y max; max = 21333 como el intel_backlight del portátil). Entiende lo que usan
+# lock-dim.sh y keybindings.conf: -m, -q, -p, -e[K], -n[M], -d DISPOSITIVO, -c CLASE, get | max | set.
+# El dispositivo se llama fake_backlight (FAKE_BL_NAME lo cambia: dimtest.sh usa intel_backlight).
+# `set` acepta "N" (valor crudo) y "N%" (porcentaje en la curva de -e). Nunca toca /sys.
+import os, sys
+
+bl = os.environ.get("FAKE_BL")
+if not bl:
+    sys.exit("brightnessctl falso: falta FAKE_BL")
+os.makedirs(bl, exist_ok=True)
+
+def read(name, default):
+    try:
+        return int(open(os.path.join(bl, name)).read())
+    except OSError:
+        return default
+
+mx, raw = read("max", 21333), read("raw", 21333)
+exp, minv, quiet, machine, pretend, dev, pos = 1, 1, False, False, False, os.environ.get("FAKE_BL_NAME", "fake_backlight"), []
+args = sys.argv[1:]
+i = 0
+while i < len(args):
+    a = args[i]
+    if a in ("-m", "--machine-readable"): machine = True
+    elif a in ("-q", "--quiet"): quiet = True
+    elif a in ("-p", "--pretend"): pretend = True
+    elif a.startswith("-e"): exp = int(a[2:] or 4)
+    elif a.startswith("--exponent"): exp = int(a.split("=")[1]) if "=" in a else 4
+    elif a.startswith("-n"): minv = int(a[2:] or 1)
+    elif a in ("-d", "-c"): i += 1; dev = args[i] if a == "-d" else dev
+    elif a.startswith("-d"): dev = a[2:]
+    elif not a.startswith("-"): pos.append(a)
+    i += 1
+
+def pct(r): return round(100 * (r / mx) ** (1 / exp))
+def show(r):
+    if quiet: return
+    if machine: print(f"{dev},backlight,{r},{pct(r)}%,{mx}")
+    else: print(f"Device '{dev}' of class 'backlight':\n\tCurrent brightness: {r} ({pct(r)}%)\n\tMax brightness: {mx}")
+
+cmd = pos[0] if pos else "info"
+if cmd == "set":
+    v = pos[1]
+    if v.endswith("%"): new = round(mx * (float(v[:-1]) / 100) ** exp)
+    else: new = int(v)
+    new = max(minv, min(mx, new))
+    if not pretend:
+        open(os.path.join(bl, "raw"), "w").write(str(new))
+        with open(os.path.join(bl, "log"), "a") as f: f.write(f"set {v} -> {new}\n")
+    show(new)
+elif cmd == "get": print(raw)
+elif cmd == "max": print(mx)
+else: show(raw)
