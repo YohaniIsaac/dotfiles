@@ -1,10 +1,10 @@
 # Referencias de diseño
 
-Repositorios y páginas de los que se toman ideas (diseño, estructura, widgets) para el escritorio: la barra y los popups de AGS, Rofi, los dashboards y el tema. Son inspiración: no se copia código sin revisar su licencia ni sin adaptarlo a las reglas de [CLAUDE.md](CLAUDE.md) (una config para todas las laptops por hostname, sin rutas absolutas, colores de Matugen sin trackear y nada de subscribe dentro de un poll).
+Repositorios y páginas de los que se toman ideas (diseño, estructura, widgets) para el escritorio: la barra y los popups de AGS, Rofi, los dashboards, la pantalla de bloqueo y el tema. Son inspiración: no se copia código sin revisar su licencia ni sin adaptarlo a las reglas de [CLAUDE.md](CLAUDE.md) (una config para todas las laptops por hostname, sin rutas absolutas, colores de Matugen sin trackear y nada de subscribe dentro de un poll).
 
 Nuestro stack es **AGS v3 + Astal (GTK4) + gnim** sobre Hyprland. Los repos con el mismo stack se pueden leer como código; los de Quickshell, Waybar o Eww sirven para el diseño y hay que reescribirlos.
 
-Última revisión: 2026-09-30.
+Última revisión: 2026-10-02 (los 20 enlaces responden).
 
 ## Configuración general
 
@@ -50,6 +50,16 @@ Añadidas por Claude durante la investigación del popup de audio (2026-09-30); 
 | [knightinfected/PipeWireController](https://github.com/knightinfected/PipeWireController/) | Centro de control de audio: enrutado, EQ paramétrico como dispositivo de salida y reglas por aplicación. | GTK4/Libadwaita, PipeWire |
 | [wwmm/easyeffects](https://github.com/wwmm/easyeffects) | Efectos y ecualizador para las apps de PipeWire. Una cadena global de entrada y otra de salida; su línea de comandos solo carga presets y hace bypass. | PipeWire |
 | [seele-shell #59](https://github.com/silas00301/seele-shell/pull/59) y [dotfiles #26](https://github.com/fhlkfds/dotfiles/pull/26) | Dos PR que añaden un mezclador por aplicación a un panel de audio: cómo se resuelve el nombre y el icono de cada app, el tope de 100 % y los sliders dentro de contenedores con scroll. | Quickshell (QML) |
+
+## Por investigar (añadidas 2026-10-01)
+
+Solo se guardan los enlaces y lo que se quiere sacar de cada uno; nada está implementado ni investigado a fondo.
+
+| Referencia | Qué es | Qué se quiere sacar |
+|---|---|---|
+| [omarchy-coppernight-theme](https://github.com/hembramnishant50-glitch/omarchy-coppernight-theme#-%E7%BE%8E%E5%AD%A6--the-design-philosophy) | Tema oscuro para Omarchy (índigo con acentos cobre), con más de 50 configuraciones de apps. Licencia MIT solo según la insignia de su README: el repo no trae archivo `LICENSE`. | **Gestor de archivos**: configura Nautilus (colores de fondo) y un tema para Yazi (gestor de terminal). Además, ideas generales de diseño; su filosofía (sección "The design philosophy") es usar el índigo para el espacio vacío y reservar el cobre para los puntos focales. |
+| [vyrx-dev/symphony](https://github.com/vyrx-dev/symphony) | Escritorio Arch + Hyprland minimalista (Waybar, Rofi, SwayNC, Matugen, Fish + Starship) con dos modos: Vibe y Focus (este último sin animaciones, bordes mínimos y sin transparencia). Licencia MIT. **Archivado el 2026-05-15**. | Posible cambio de la barra a algo más minimalista. Waybar: solo sirve de referencia visual, hay que reescribirlo en AGS. |
+| [LoneWolf4713/seraphic.dotfiles](https://github.com/LoneWolf4713/seraphic.dotfiles) | Dotfiles de Hyprland con paleta Everblush (Waybar, Rofi, Hyprlock, SwayNC, Spicetify). **Sin licencia explícita**: no copiar código. | **Fondo de pantalla con movimiento**: según su README usa `swww` (que ya tenemos como `awww`) y `mpvpaper` (vídeo como fondo). Revisar cómo lo hace y si es viable aquí. |
 
 ## Cómo usar esta lista
 
