@@ -111,6 +111,7 @@ ripgrep
 eza
 git-delta
 brightnessctl
+ddcutil
 stow
 curl
 libnotify

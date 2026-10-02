@@ -22,6 +22,16 @@
 #   4. La salida de hyprlock va a un archivo: con un pipe cerrado (p. ej. si lo lanza la barra de
 #      AGS y esta se reinicia) un SIGPIPE mataría al bloqueador y la sesión quedaría en la
 #      pantalla de "lockscreen app died".
+#   5. Con el compositor bloqueado pero sin hyprlock (murió) `hyprctl locked` sigue diciendo true:
+#      el guard exige también un hyprlock vivo, y si falta lo relanza (misc:allow_session_lock_restore
+#      deja que el nuevo tome el relevo). Es la recuperación desde un TTY: `hyprctl --instance 0
+#      dispatch exec ~/.config/hypr/scripts/lock.sh`.
+#   6. Bajar el brillo de las pantallas (la laptop y los monitores que hablen DDC/CI) mientras dura el
+#      bloqueo y devolverlo al desbloquear (lock-dim.sh, que explica cuánto y por qué). Se devuelve en
+#      cuanto hyprlock sale o el compositor dice "desbloqueado", y en cualquier salida de este script
+#      (a un monitor dormido se le reintenta unos segundos); lo guardado sobrevive a un fallo (SIGKILL,
+#      Hyprland caído) y se devuelve en el siguiente bloqueo o al iniciar Hyprland. A los monitores que
+#      DDC no puede atenuar se les pone un filtro oscuro en hyprlock (lock-dim.sh overlay, antes de lanzar).
 #
 # Los datos de la pantalla (fondo, avatar, clima) los prepara lock-info.sh antes de lanzar.
 
@@ -42,16 +52,28 @@ session_hyprlocks() {
   done
 }
 
-# Ya bloqueado → nada que hacer (doble pulsación, hypridle y atajo a la vez…)
-is_locked && exit 0
+# Bloqueo firme: el compositor dice bloqueado Y hay un hyprlock de esta sesión sosteniéndolo. Con el
+# compositor bloqueado y sin hyprlock (murió: pantalla de "lockscreen app died") `hyprctl locked` sigue
+# diciendo true; ahí hay que relanzarlo, y misc:allow_session_lock_restore deja que el nuevo tome el relevo.
+is_held() { is_locked && [[ -n "$(session_hyprlocks)" ]]; }
 
-# Datos de la pantalla. Nunca debe impedir ni retrasar el bloqueo más de 3 s.
-info="$HOME/.config/hypr/scripts/lock-info.sh"
+# Ya bloqueado → nada que hacer (doble pulsación, hypridle y atajo a la vez…)
+is_held && exit 0
+
+# Los scripts hermanos (en la misma carpeta que este)
+here=$(dirname "$(readlink -f "$0")")
+info="$here/lock-info.sh"
+dim="$here/lock-dim.sh"
+
+# Datos de la pantalla y filtro de brillo de los monitores sin DDC, a la vez: hyprlock lee los dos al
+# arrancar. Ninguno debe impedir ni retrasar el bloqueo más de 3 s.
+[[ -x "$dim" ]] && { timeout 3 "$dim" overlay >/dev/null 2>&1 & }
 [[ -x "$info" ]] && timeout 3 "$info" prepare >/dev/null 2>&1
+wait
 
 exec 9>"${XDG_RUNTIME_DIR:-/tmp}/hyprlock-launch.lock"
 flock -w 5 9 || { note "no se obtuvo el flock de lanzamiento"; exit 1; }
-is_locked && exit 0
+is_held && exit 0
 
 # Con la sesión desbloqueada y el flock en la mano, un hyprlock de más de 10 s no sostiene
 # ningún bloqueo: es un zombi (o un duplicado colgado). Fuera.
@@ -63,6 +85,9 @@ if is_unlocked; then
     fi
   done
 fi
+
+# Y un brillo guardado con la sesión desbloqueada es de un bloqueo anterior que no llegó a devolverlo.
+[[ -x "$dim" ]] && "$dim" restore -
 
 hyprlock "$@" >>"$log" 2>&1 9>&- </dev/null &
 pid=$!
@@ -81,12 +106,22 @@ if ! is_locked; then
   exit 1
 fi
 
-# Vigilar: si el compositor dice desbloqueado 3 s seguidos y hyprlock sigue vivo, es el bug.
+# Brillo: bajarlo ahora que el bloqueo es firme y devolverlo salgamos como salgamos (también si nos
+# matan con TERM/INT/HUP; con KILL no hay trap, y lo guardado se devuelve en el siguiente bloqueo).
+if [[ -x "$dim" ]]; then
+  trap '"$dim" restore $$ 15' EXIT        # con reintentos: un monitor dormido tarda en despertar
+  trap 'exit 1' HUP INT TERM
+  "$dim" dim $$ --if-locked
+fi
+
+# Vigilar: si el compositor dice desbloqueado 3 s seguidos y hyprlock sigue vivo, es el bug. El
+# `tail --pid` espera a que hyprlock salga y vuelve al instante (el brillo se devuelve sin demora al
+# desbloquear); si no sale, vuelve al cabo de 1 s y se mira el compositor.
 unlocked_for=0
 while kill -0 "$pid" 2>/dev/null; do
-  sleep 1
+  timeout 1 tail --pid="$pid" -s 0.1 -f /dev/null 2>/dev/null
   if is_unlocked; then
-    unlocked_for=$((unlocked_for + 1))
+    (( unlocked_for++ == 0 )) && [[ -x "$dim" ]] && "$dim" restore $$   # desbloqueada con hyprlock vivo: ya
     if (( unlocked_for >= 3 )); then
       kill -KILL "$pid" 2>/dev/null && note "hyprlock $pid no salió tras desbloquear; eliminado"
       break
