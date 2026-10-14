@@ -34,12 +34,12 @@
 # Monitores externos: su brillo no está ahí sino dentro del monitor; se cambia por DDC/CI (VCP 0x10)
 # con `ddcutil --bus N`, sobre el I2C del cable. Cada conector externo conectado se resuelve por sysfs
 # (/sys/class/drm/card*-<conector>/ddc → i2c-N: sin `ddcutil detect`, que tarda segundos) y las
-# órdenes van en paralelo y con timeout. Los que no responden se omiten (el SAC LED MONITOR de DP-1
-# falla en 20 ms: "DDC communication failed") y quedan anotados en ~/.cache/hyprlock/lock.log.
+# órdenes van en paralelo y con timeout. Los que no responden se omiten (lo que haya en DP-1, un
+# USB-C con DP alt-mode, falla en 20 ms: "DDC communication failed") y quedan anotados en ~/.cache/hyprlock/lock.log.
 # Requiere el paquete ddcutil y acceso a /dev/i2c-* (su regla udev da `uaccess` a la sesión).
 # LOCK_DIM_DDC=0 los deja en paz.
 #
-# Monitores que DDC no puede atenuar (el SAC LED MONITOR de DP-1): `overlay` escribe en
+# Monitores que DDC no puede atenuar (el de DP-1): `overlay` escribe en
 # ~/.cache/hyprlock/dim-overlay.conf, que hyprlock.conf incluye, un `shape` negro translúcido por monitor
 # y por encima de todo que simula la bajada. Es solo visual (la retroiluminación sigue igual: no ahorra
 # energía) y solo vale durante el bloqueo, que es lo único que se ve. La opacidad sale de la misma curva
