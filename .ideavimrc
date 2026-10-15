@@ -1,0 +1,23 @@
+" Sincronizar registro por defecto con el clipboard del sistema.
+" unnamed -> vincula "" a PRIMARY (selección con mouse)
+" unnamedplus -> vincula "" a CLIPBOARD (Ctrl+C). Con ambos: "y" escribe
+" en los dos, y "p" prioriza CLIPBOARD (lo que esperás al usar Ctrl+C).
+set clipboard+=unnamed,unnamedplus
+
+" Ir del editor al Project view (equivalente a tu Ctrl+H en nvim)
+nnoremap <C-h> :action ActivateProjectToolWindow<CR>
+
+" Saltar entre tabs en orden, estilo gt/gT de vim
+nnoremap gt :action NextTab<CR>
+nnoremap gT :action PreviousTab<CR>
+
+" Leader igual que en nvim
+let mapleader = " "
+
+" Navegación semántica, mismos gestos que tu nvim (lsp-config.lua)
+nnoremap gd :action GotoDeclaration<CR>
+nnoremap <leader>gd :action GotoDeclaration<CR>
+nnoremap gr :action ShowUsages<CR>
+nnoremap <leader>gr :action FindUsages<CR>
+nnoremap gi :action GotoImplementation<CR>
+nnoremap <leader>gh :action CallHierarchy<CR>
