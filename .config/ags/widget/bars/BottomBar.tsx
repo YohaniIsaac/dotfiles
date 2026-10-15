@@ -7,7 +7,8 @@ import GLib from "gi://GLib"
 import Hyprland from "gi://AstalHyprland"
 import Battery  from "gi://AstalBattery"
 import Pango    from "gi://Pango"
-import { spotify, mediaState } from "../mpris"
+import { spotify, mediaState, mediaFraction, mediaWave, cleanTitle } from "../mpris"
+import { drawMediaFill } from "../mediaFill"
 import { volState, volumeIcon, scrollVolume } from "../audio"
 import { togglePopup } from "../Popup"
 import { netIcon } from "../network"
@@ -245,12 +246,25 @@ function BatteryWidget() {
 
 // ── Spotify — píldora (estado reactivo compartido en widget/mpris.ts) ────────
 
+// Clase de la píldora: "paused" (opacidad baja) cuando no suena.
+// A nivel de módulo, no dentro de MediaPill: la barra instancia una píldora por monitor.
+const mediaPillClass = mediaState.as(m => m.playing ? "media-inner" : "media-inner paused")
+
 function MediaPill() {
+  // El contenido (carátula + texto) va como overlay sobre el relleno; ver `$` del overlay
+  let content!: Gtk.Widget
   return (
-    <box class={mediaState.as(m => m.playing ? "media-inner" : "media-inner paused")}
-      spacing={6} valign={Gtk.Align.CENTER}
+    <overlay class={mediaPillClass}
+      valign={Gtk.Align.CENTER}
+      // Título y artista completos (la píldora los acorta y limpia el título)
+      tooltipText={mediaState.as(m => m.artist ? `${m.title}\n${m.artist}` : m.title)}
       visible={mediaState.as(m => m.available)}
       $={(self) => {
+        // Recorte redondeado: el relleno no se sale de las esquinas de la píldora
+        self.set_overflow(Gtk.Overflow.HIDDEN)
+        // El tamaño de la píldora lo da el contenido, no el relleno
+        self.set_measure_overlay(content, true)
+
         // Clic en cualquier parte de la píldora abre el popup (widget/MediaPlayer.tsx)
         const click = new Gtk.GestureClick()
         click.connect("pressed", () => app.toggle_window("media-popup"))
@@ -280,6 +294,19 @@ function MediaPill() {
         self.add_controller(scroll)
       }}
     >
+      {/* Relleno de progreso (widget/mediaFill.ts). Se repinta cuando avanza la canción (2/s) y
+          con cada paso de la onda (mpris.ts), en las barras de todos los monitores. */}
+      <drawingarea class="media-fill" hexpand vexpand canTarget={false}
+        $={(area: Gtk.DrawingArea) => {
+          area.set_draw_func((a, cr, w, h) => drawMediaFill(a as Gtk.DrawingArea, cr, w, h))
+          const offFrac  = mediaFraction.subscribe(() => area.queue_draw())
+          const offWave  = mediaWave.subscribe(() => area.queue_draw())
+          area.connect("destroy", () => { offFrac(); offWave() })
+        }}
+      />
+      <box $type="overlay" class="media-content" spacing={6} valign={Gtk.Align.CENTER}
+        $={(self: Gtk.Widget) => { content = self }}
+      >
       <box class="media-cover" valign={Gtk.Align.CENTER}
         css={mediaState.as(m => m.cover ? `background-image: url("file://${m.cover}");` : "")}
       >
@@ -287,11 +314,12 @@ function MediaPill() {
           visible={mediaState.as(m => !m.cover)} />
       </box>
 
-      <label class="media-title" label={mediaState.as(m => m.title)}
+      <label class="media-title" label={mediaState.as(m => cleanTitle(m.title))}
         maxWidthChars={18} ellipsize={Pango.EllipsizeMode.END} />
       <label class="media-artist" label={mediaState.as(m => m.artist)}
         maxWidthChars={14} ellipsize={Pango.EllipsizeMode.END} />
-    </box>
+      </box>
+    </overlay>
   )
 }
 

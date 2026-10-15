@@ -1,8 +1,7 @@
 import { Astal, Gtk } from "ags/gtk4"
-import { createPoll } from "ags/time"
 import Pango from "gi://Pango"
 import { Popup } from "./Popup"
-import { spotify, mediaState } from "./mpris"
+import { spotify, mediaState, position, holdPosition, seekTo } from "./mpris"
 
 // ── Ventana popup — carátula grande + controles completos ────────────────────
 // Se abre/cierra con clic en la píldora central (BottomBar.tsx), Esc, o clic afuera
@@ -29,16 +28,9 @@ function formatTime(totalSeconds: number): string {
 }
 
 export default function MediaPlayer() {
-  // MPRIS no notifica la posición mientras suena (solo en saltos explícitos) — hace
-  // falta un poll liviano. "seeking" evita que el poll pise el valor mientras arrastrás.
-  let seeking = false
+  // La posición es compartida con la píldora de la barra — vive en mpris.ts.
+  // holdPosition(true) evita que se pise el valor mientras arrastras el seek.
   let pendingSeek = 0
-  let lastPosition = 0
-  const position = createPoll(0, 1000, async () => {
-    if (seeking) return lastPosition
-    lastPosition = spotify.position ?? 0
-    return lastPosition
-  })
 
   // Volumen del popup: mismo motivo — solo se escribe a Spotify al soltar el drag.
   let pendingVolume = 0
@@ -110,10 +102,9 @@ export default function MediaPlayer() {
             onValueChanged={(self: Astal.Slider) => { pendingSeek = self.value }}
             $={(self: Astal.Slider) => {
               const click = new Gtk.GestureClick()
-              click.connect("pressed", () => { seeking = true })
+              click.connect("pressed", () => { holdPosition(true) })
               click.connect("released", () => {
-                seeking = false
-                spotify.position = pendingSeek   // recién ahora se manda el Seek real, una sola vez
+                seekTo(pendingSeek)   // recién ahora se manda el Seek real, una sola vez (y suelta el hold)
               })
               self.add_controller(click)
             }}

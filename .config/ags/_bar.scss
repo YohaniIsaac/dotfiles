@@ -79,8 +79,11 @@ window.BottomBar {
 
   .media-inner {
     @include bar-pill;
-    padding: 3px 10px;
-    transition: background 150ms ease, opacity 150ms ease;
+    padding: 0;   // el padding va en .media-content: el relleno (.media-fill) cubre toda la píldora
+    // OJO: solo background-COLOR. Con `background` a secas GTK anima también background-image
+    // (llegó a fundir el degradado del relleno a 75–100 Hz por software: barra de ~4 % a ~35 %
+    // de CPU). El relleno ya no usa background-image, pero se deja así por si vuelve.
+    transition: background-color 150ms ease, opacity 150ms ease;
 
     &:hover {
       background: $surface-high;   // única señal de que la píldora entera es clickeable (abre el popup)
@@ -90,6 +93,16 @@ window.BottomBar {
       // Spotify pausado — misma píldora, menos protagonismo visual
       opacity: 0.6;
     }
+  }
+
+  .media-content {
+    padding: 3px 10px;
+  }
+
+  // Relleno de progreso: el color (con su alfa) lo lee widget/mediaFill.ts con get_color().
+  // Sube el alfa para un relleno más marcado; si tapa el texto, bájalo.
+  .media-fill {
+    color: rgba($primary, 0.28);
   }
 
   .media-cover {
