@@ -1,8 +1,8 @@
 {
-  "model": "sonnet",
   "env": {
     "DISABLE_AUTO_COMPACT": "1"
   },
+  "model": "sonnet",
   "statusLine": {
     "type": "command",
     "command": "npx -y @owloops/claude-powerline@latest"
@@ -21,13 +21,13 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "modelSettings": {
     "claude-sonnet-5": {
       "effortLevel": "xhigh"
     },
     "claude-sonnet-5-5": {
-      "effortLevel": "high"
+      "effortLevel": "medium"
     },
     "claude-opus-5-5": {
       "effortLevel": "high"
