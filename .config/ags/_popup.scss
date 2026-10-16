@@ -1,0 +1,23 @@
+// ── Silueta de los popups de la barra: colores ───────────────────────────────────────────────────
+// widget/popupShape.ts dibuja la silueta (cuello + tarjeta) con Cairo y lee estos colores del CSS con
+// get_color() (la propiedad `color` de cada nodo), así siguen al tema de Matugen y a los ajustes de
+// _shared.scss ($fill-intensity, $border-intensity, $popup-hover-fill). Ninguno de estos nodos tiene
+// hijos, así que `color` no se hereda a ningún texto.
+
+@use './shared' as *;
+
+// Relleno de la tarjeta: transparente en reposo (igual que la barra), más sólido al pasar el mouse
+// (para leer mejor). El hover es del grupo entero; la transición de color anima el cambio.
+.popup-shape {
+  color: rgba($surface, $fill-intensity);
+  transition: color 200ms ease;
+}
+.popup-group:hover .popup-shape {
+  color: rgba($surface, $popup-hover-fill);
+}
+
+// Relleno del cuello: el de las píldoras, siempre (para que no haya un escalón con la píldora).
+.popup-stem-color { color: rgba($surface, $fill-intensity); }
+
+// Borde y glow.
+.popup-border-color { color: rgba($primary, $border-intensity); }

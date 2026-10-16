@@ -6,9 +6,20 @@ import MediaPlayer from "./widget/MediaPlayer"
 import AudioPopup  from "./widget/AudioPopup"
 import NetworkPopup from "./widget/NetworkPopup"
 import BottomBar   from "./widget/bars/BottomBar"
+import { openPopup } from "./widget/Popup"
+import Hyprland from "gi://AstalHyprland"
 
 app.start({
   css: style,
+  // `ags request popup <media-popup|audio-popup|network-popup> [monitor]`: abre (o cierra) el popup
+  // colgando de su píldora, como el clic. Sin monitor, el que tiene el foco.
+  requestHandler(argv: string[], response: (r: string) => void) {
+    if (argv[0] === "popup" && argv[1]) {
+      const connector = argv[2] ?? Hyprland.get_default()?.focused_monitor?.name
+      return response(openPopup(argv[1], connector))
+    }
+    response("uso: ags request popup <nombre> [monitor]")
+  },
   main() {
     MediaPlayer()
     AudioPopup()

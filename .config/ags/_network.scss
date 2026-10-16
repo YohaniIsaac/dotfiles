@@ -9,8 +9,8 @@ window.NetworkPopup {
 
   > * { background: transparent; }
 
-  // Mismo look que los popups de audio y Spotify.
-  .popup-root { @include popup-surface(14px); }
+  // Solo el contenido: la silueta la dibuja Popup.tsx (igual que los popups de audio y Spotify).
+  .popup-root { @include popup-content(14px); }
 
   .net-title { @include popup-title; }
   .net-hint  { @include popup-hint; padding: 4px 8px; }

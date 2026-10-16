@@ -17,7 +17,7 @@ import {
 // ni subprocesos). Este archivo solo dibuja un NetStore; por defecto el real, pero se puede pasar
 // otro con datos de prueba (Wi-Fi apagado, conectando, error…) para verlo sin tocar la red.
 
-const POPUP_WIDTH = 340       // ancho fijo del popup (también centra el popup bajo el módulo: ver Popup.tsx)
+const POPUP_WIDTH = 340       // ancho fijo del popup (la colocación bajo la píldora es de Popup.tsx)
 
 // Alto de la lista de redes. Una fila mide 27 px más 2 de separación (medido: 8 filas = 230 px).
 // Mínimo: 4 filas, para que la lista no abra enana mientras llegan las redes del escaneo y se vean

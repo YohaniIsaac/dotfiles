@@ -10,7 +10,7 @@ import Pango    from "gi://Pango"
 import { spotify, mediaState, mediaFraction, mediaWave, cleanTitle } from "../mpris"
 import { drawMediaFill } from "../mediaFill"
 import { volState, volumeIcon, scrollVolume } from "../audio"
-import { togglePopup } from "../Popup"
+import { togglePopup, registerPopupOrigin } from "../Popup"
 import { netIcon } from "../network"
 
 const HOME = GLib.get_home_dir()
@@ -153,6 +153,7 @@ function Volume() {
       class="sys-btn"
       onClicked={(self: Gtk.Button) => togglePopup("audio-popup", self)}
       $={(self) => {
+        registerPopupOrigin("audio-popup", self)
         const scroll = new Gtk.EventControllerScroll()
         scroll.set_flags(Gtk.EventControllerScrollFlags.VERTICAL)
         scroll.connect("scroll", (_c: Gtk.EventControllerScroll, _dx: number, dy: number) => {
@@ -177,7 +178,9 @@ function Volume() {
 
 function NetworkWidget() {
   return (
-    <button class="sys-btn" onClicked={(self: Gtk.Button) => togglePopup("network-popup", self)}>
+    <button class="sys-btn" onClicked={(self: Gtk.Button) => togglePopup("network-popup", self)}
+      $={(self) => registerPopupOrigin("network-popup", self)}
+    >
       <box class="sys-module" valign={Gtk.Align.CENTER}>
         <label class="sys-icon" label={netIcon} />
       </box>
@@ -260,14 +263,15 @@ function MediaPill() {
       tooltipText={mediaState.as(m => m.artist ? `${m.title}\n${m.artist}` : m.title)}
       visible={mediaState.as(m => m.available)}
       $={(self) => {
+        registerPopupOrigin("media-popup", self)
         // Recorte redondeado: el relleno no se sale de las esquinas de la píldora
         self.set_overflow(Gtk.Overflow.HIDDEN)
         // El tamaño de la píldora lo da el contenido, no el relleno
         self.set_measure_overlay(content, true)
 
-        // Clic en cualquier parte de la píldora abre el popup (widget/MediaPlayer.tsx)
+        // Clic en cualquier parte de la píldora abre el popup (widget/MediaPlayer.tsx), que cuelga de ella
         const click = new Gtk.GestureClick()
-        click.connect("pressed", () => app.toggle_window("media-popup"))
+        click.connect("pressed", () => togglePopup("media-popup", self))
         self.add_controller(click)
 
         // Scroll = ajusta el volumen propio de Spotify (independiente del volumen del sistema).

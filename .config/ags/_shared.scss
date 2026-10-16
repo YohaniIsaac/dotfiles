@@ -97,18 +97,36 @@ $popup-hover-fill: 0.92;
   }
 }
 
-// ── Mixins de los popups de la barra (audio y red; el de Spotify usa solo popup-surface) ──────────
+// ── Mixins de los popups de la barra (Spotify, audio y red) ──────────────────────────────────────
 
-// Superficie del popup (.popup-root): look de píldora, transparente en reposo y más sólida al pasar
-// el mouse, para leer mejor. Cada popup pone su padding.
-@mixin popup-surface($padding) {
-  @include pill-look;
+// Contenido del popup (.popup-root): solo el relleno interior. La silueta (borde, relleno, glow y el
+// "más sólido al pasar el ratón") la dibuja widget/popupShape.ts detrás, con los colores de _popup.scss.
+// Cada popup pone su padding.
+@mixin popup-content($padding) {
   padding: $padding;
-  transition: background 200ms ease;
+}
 
-  &:hover {
-    background: rgba($surface, $popup-hover-fill);
-  }
+// Píldora de origen de un popup abierto (clase `fused`, la pone widget/Popup.tsx): pierde las
+// esquinas y el borde inferiores, y el glow y la sombra de abajo, para que el popup cuelgue de ella
+// como una sola silueta.
+//   · Borde inferior: se le quita el GROSOR (no solo el color): con un borde inferior transparente
+//     GTK corta en diagonal los bordes laterales y dejaba una muesca de 1×2 px en cada esquina. El
+//     grosor perdido (2 px) se compensa con relleno inferior ($padding-bottom = el de la píldora + 2)
+//     para que la píldora no cambie de altura ni se mueva su contenido.
+//   · Glow: solo arriba y a los lados. Cada sombra se desplaza hacia arriba y se encoge 1 px (spread
+//     negativo) para que su cola borrosa NO llegue por debajo del borde inferior de la píldora: medido,
+//     con -2 px de desplazamiento y 3 px de desenfoque la cola dejaba una fila tenue de brillo justo en
+//     la unión con el popup (la barra tiene 3 px transparentes bajo la píldora de música).
+//     Condición: desplazamiento_y − |spread| + desenfoque ≤ 0.
+@mixin pill-fused($padding-bottom) {
+  border-bottom-width: 0;
+  padding-bottom: $padding-bottom;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 -2px 2px -1px rgba($primary, 0.6),
+              -2px -1px 2px -1px rgba($primary, 0.6),
+              2px -1px 2px -1px rgba($primary, 0.6),
+              inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 // Título de sección dentro de un popup ("Salida", "Aplicaciones", "Wi-Fi").

@@ -93,6 +93,12 @@ window.BottomBar {
       // Spotify pausado — misma píldora, menos protagonismo visual
       opacity: 0.6;
     }
+
+    &.fused { @include pill-fused(2px); }   // popup abierto colgando de la píldora (widget/Popup.tsx); padding 0 + 2 del borde
+
+    // Pausado + popup abierto: opacidad completa, igual que el cuello del popup (si no, la píldora al
+    // 60 % y el cuello al 100 % dejan un escalón de brillo justo en la unión).
+    &.paused.fused { opacity: 1; }
   }
 
   .media-content {
@@ -138,6 +144,8 @@ window.BottomBar {
 
   .sys-inner {
     @include bar-pill;
+
+    &.fused { @include pill-fused(5px); }   // popup de audio o red abierto (widget/Popup.tsx); padding 3 + 2 del borde
   }
 
   .sys-module {

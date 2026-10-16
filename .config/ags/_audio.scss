@@ -9,9 +9,8 @@ window.AudioPopup {
 
   > * { background: transparent; }
 
-  // Mismo look que el popup de Spotify: borde sólido + glow + fondo transparente en reposo,
-  // más sólido al pasar el mouse (para leer mejor).
-  .popup-root { @include popup-surface(14px); }
+  // Solo el contenido: la silueta (borde, glow y fondo, más sólido al pasar el mouse) la dibuja Popup.tsx.
+  .popup-root { @include popup-content(14px); }
 
   .audio-title { @include popup-title; }
 

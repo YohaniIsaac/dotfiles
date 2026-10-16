@@ -9,10 +9,9 @@ window.MediaPlayer {
 
   > * { background: transparent; }
 
-  // Mismo look que las píldoras de la barra (borde sólido + glow + fondo transparente).
-  // Transparencia dinámica: transparente en reposo, más sólido al pasar el mouse (para leer).
+  // Solo el contenido: la silueta (borde, glow y fondo, más sólido al pasar el mouse) la dibuja Popup.tsx.
   .popup-root {
-    @include popup-surface(16px);
+    @include popup-content(16px);
     min-width: 380px;   // ancho del popup — carátula a la izquierda, todo lo demás a la derecha
   }
 

@@ -2,12 +2,14 @@
 // Para editar estilos ve al archivo correspondiente:
 //   _shared.scss      → variables globales ($radius, $font) y mixins (bar-pill, slider-track, popup-*)
 //   _bar.scss         → barra inferior (reloj, workspaces, sistema)
+//   _popup.scss       → colores de la silueta de los popups (los lee widget/popupShape.ts)
 //   _mediaplayer.scss → popup del reproductor (Spotify)
 //   _audio.scss       → popup de audio (salida, volumen general y por aplicación)
 //   _network.scss     → popup de red (interruptor de Wi-Fi, redes cercanas y Ethernet)
 //   colors.scss       → colores Matugen (no editar manualmente)
 
 @use './bar';
+@use './popup';
 @use './mediaplayer';
 @use './audio';
 @use './network';

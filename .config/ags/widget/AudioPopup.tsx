@@ -17,7 +17,7 @@ import {
 // llamadas D-Bus que espaciar (a diferencia del volumen de Spotify en MediaPlayer.tsx). Se usa
 // "change-value" (solo se emite por acción del usuario) para no crear un bucle con el binding.
 
-const POPUP_WIDTH = 340   // ancho fijo del popup (también centra el popup bajo el módulo: ver Popup.tsx)
+const POPUP_WIDTH = 340   // ancho fijo del popup (la colocación bajo la píldora es de Popup.tsx)
 
 // Iconos Nerd Font (Material Design), como el resto de la barra. El tema de iconos (Adwaita) no
 // trae los iconos de las apps (brave, spotify…), así que cada app se resuelve a un glifo por nombre.

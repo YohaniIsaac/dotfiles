@@ -4,7 +4,7 @@ import { Popup } from "./Popup"
 import { spotify, mediaState, position, holdPosition, seekTo } from "./mpris"
 
 // ── Ventana popup — carátula grande + controles completos ────────────────────
-// Se abre/cierra con clic en la píldora central (BottomBar.tsx), Esc, o clic afuera
+// Se abre/cierra con clic en la píldora central (BottomBar.tsx; el popup cuelga de ella), Esc, o clic afuera
 // (se cierra solo al perder el foco). La ventana y su cierre son de Popup.tsx.
 //
 // IMPORTANTE sobre seek/volumen: cada asignación a spotify.position / spotify.volume
@@ -36,7 +36,7 @@ export default function MediaPlayer() {
   let pendingVolume = 0
 
   return (
-    <Popup name="media-popup" class="MediaPlayer" anchor="top-center"
+    <Popup name="media-popup" class="MediaPlayer"
       orientation={Gtk.Orientation.HORIZONTAL} spacing={16}
     >
       <box class="media-popup-cover" vexpand
