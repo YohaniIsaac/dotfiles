@@ -264,18 +264,35 @@ monitor_size() {   # <conector> <json de hyprctl monitors -j>
 
 # Escribe ~/.cache/hyprlock/dim-overlay.conf (siempre existe, aunque vacío: hyprlock.conf lo incluye).
 cmd_overlay() {
-  local out="${XDG_CACHE_HOME:-$HOME/.cache}/hyprlock/dim-overlay.conf" tmp conn bus hex json
+  local out="${XDG_CACHE_HOME:-$HOME/.cache}/hyprlock/dim-overlay.conf" tmp conn bus hex json cur max t a
   local -a soft=() probe=()
+  local -A resid=()      # conector → alfa (hex) del filtro que completa lo que DDC no alcanza a bajar
   mkdir -p "${out%/*}" 2>/dev/null || return 0
   if [[ $SOFT == 1 && $DDC == 1 ]] && valid_pct "$DIM_PERCENT" && valid_pct "$DIM_PERCENT_SOFT"; then
     tmp=$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/lock-dim.XXXXXX") || return 0
     while read -r conn bus; do
       if [[ $bus == - ]] || ! command -v ddcutil >/dev/null 2>&1; then soft+=("$conn"); continue; fi
       probe+=("$conn")
-      ( timeout 1 ddcutil --bus "$bus" getvcp 10 --terse >/dev/null 2>&1 && : > "$tmp/ok.$conn" ) &
+      ( out=$(timeout 1 ddcutil --bus "$bus" getvcp 10 --terse 2>/dev/null) && echo "$out" > "$tmp/ok.$conn" ) &
     done < <(ext_displays)
     wait
-    for conn in "${probe[@]}"; do [[ -e $tmp/ok.$conn ]] || soft+=("$conn"); done
+    load_state
+    for conn in "${probe[@]}"; do
+      [[ -e $tmp/ok.$conn ]] || { soft+=("$conn"); continue; }
+      # DDC solo baja en pasos enteros de 0-100: un monitor ya oscuro (p. ej. 3/100) apenas puede bajar
+      # (3 → 1 deja un tercio de la luz, no el ~13 % buscado). Lo que falta lo pone un filtro, calculado
+      # sobre el valor ya guardado si el monitor está bajado por otro bloqueo.
+      read -r _ _ _ cur max < "$tmp/ok.$conn"
+      [[ -n ${VAL[ddc:$conn]:-} ]] && cur=${VAL[ddc:$conn]}
+      [[ $cur =~ ^[0-9]+$ && $max =~ ^[0-9]+$ ]] && (( cur > 0 && max > 0 )) || continue
+      t=$(ddc_target "$cur" "$max")
+      [[ $t =~ ^[0-9]+$ ]] || continue
+      a=$(awk -v c="$cur" -v t="$t" -v d="$((10#$DIM_PERCENT_DDC))" 'BEGIN {
+        got = t / c; want = (d / 100) ^ 4
+        if (got <= want * 1.25) exit
+        printf "%02x", (1 - (want / got) ^ (1 / 2.2)) * 255 + 0.5 }' 2>/dev/null)
+      [[ $a =~ ^[0-9a-f]{2}$ ]] && { resid[$conn]=$a; soft+=("$conn"); }
+    done
     rm -rf "$tmp"
   fi
   hex=$(awk -v d="$((10#$DIM_PERCENT_SOFT))" 'BEGIN { a = 1 - (d / 100) ^ (4 / 2.2); printf "%02x", a * 255 + 0.5 }' 2>/dev/null)
@@ -284,11 +301,12 @@ cmd_overlay() {
     echo "# Generado por lock-dim.sh en cada bloqueo; no se edita. Monitores que DDC/CI no puede atenuar:"
     echo "# un filtro negro translúcido simula la bajada de brillo (solo visual: la retroiluminación no cambia)."
     for conn in "${soft[@]}"; do
-      [[ $hex =~ ^[0-9a-f]{2}$ ]] || break
-      printf '\nshape {\n    monitor = %s\n    size = %s\n    color = rgba(000000%s)\n    rounding = 0\n    border_size = 0\n    position = 0, 0\n    halign = center\n    valign = center\n    zindex = 9\n}\n' "$conn" "$(monitor_size "$conn" "${json:-[]}")" "$hex"
+      a=${resid[$conn]:-$hex}
+      [[ $a =~ ^[0-9a-f]{2}$ ]] || continue
+      printf '\nshape {\n    monitor = %s\n    size = %s\n    color = rgba(000000%s)\n    rounding = 0\n    border_size = 0\n    position = 0, 0\n    halign = center\n    valign = center\n    zindex = 9\n}\n' "$conn" "$(monitor_size "$conn" "${json:-[]}")" "$a"
     done
   } > "$out.tmp.$$" && mv -f "$out.tmp.$$" "$out"
-  (( ${#soft[@]} )) && note "filtro de brillo (alfa 0x$hex) para: ${soft[*]}"
+  for conn in "${soft[@]}"; do note "filtro de brillo (alfa 0x${resid[$conn]:-$hex}${resid[$conn]:+, completa lo que DDC no alcanza a bajar}) para: $conn"; done
   return 0
 }
 
