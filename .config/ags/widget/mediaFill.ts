@@ -10,10 +10,32 @@ import { mediaFraction, mediaWave } from "./mpris"
 const WAVE_AMP = 2.5      // amplitud máxima de la onda, px (se multiplica por la amplitud 0–1 de mpris.ts)
 const WAVE_LEN = 18       // período de la onda, px (a ~26 px de alto se ven 1–2 ondulaciones)
 const HEAD_ALPHA = 0.9    // opacidad de la línea de cabeza
+const INNER_R    = 10     // radio de las esquinas del interior de la píldora: $radius − borde (12 − 2, _shared.scss)
+
+// Recorta el dibujo al interior redondeado de la píldora. Lo hace el propio dibujo y no un
+// `overflow: hidden` de la píldora, que además recortaba su glow (la píldora de música quedaba sin
+// halo y con un píxel brillante suelto por fuera, distinta del resto de la barra y del popup).
+// Con el popup abierto (`fused`) la píldora tiene cuadradas las esquinas de abajo.
+function clipInterior(cr: Cairo.Context, w: number, h: number, squareBottom: boolean) {
+  const r = INNER_R, rb = squareBottom ? 0 : INNER_R
+  cr.newPath()
+  cr.moveTo(r, 0)
+  cr.lineTo(w - r, 0)
+  cr.arc(w - r, r, r, -Math.PI / 2, 0)
+  cr.lineTo(w, h - rb)
+  if (rb) cr.arc(w - rb, h - rb, rb, 0, Math.PI / 2)
+  cr.lineTo(rb, h)
+  if (rb) cr.arc(rb, h - rb, rb, Math.PI / 2, Math.PI)
+  cr.lineTo(0, r)
+  cr.arc(r, r, r, Math.PI, 1.5 * Math.PI)
+  cr.closePath()
+  cr.clip()
+}
 
 export function drawMediaFill(area: Gtk.DrawingArea, cr: Cairo.Context, w: number, h: number) {
   const frac = mediaFraction.peek()
   if (frac < 0) return                       // sin duración (podcast, archivo local) o sin Spotify
+  clipInterior(cr, w, h, area.get_parent()?.has_css_class("fused") ?? false)
   const c = area.get_color()
   const x0 = frac * w
   const { phase, amp } = mediaWave.peek()    // amp = 0 en pausa: el borde queda recto

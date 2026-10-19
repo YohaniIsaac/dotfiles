@@ -94,7 +94,15 @@ window.BottomBar {
       opacity: 0.6;
     }
 
-    &.fused { @include pill-fused(2px); }   // popup abierto colgando de la píldora (widget/Popup.tsx); padding 0 + 2 del borde
+    // Popup abierto colgando de la píldora (widget/Popup.tsx). El borde inferior que pierde se compensa
+    // en .media-content (no en el padding de la píldora): así el relleno de progreso, que ocupa el
+    // interior de la píldora, llega hasta su borde inferior y no deja 2 filas sin teñir en la unión.
+    &.fused {
+      @include pill-fused(0px);
+      @include pill-fill;                  // el del cuello: sin el relleno de hover, que haría un escalón de color
+      .media-content { padding-bottom: 5px; }   // 3 + los 2 px del borde inferior
+    }
+    &.framed { @include pill-framed; }     // el marco lo dibuja el popup
 
     // Pausado + popup abierto: opacidad completa, igual que el cuello del popup (si no, la píldora al
     // 60 % y el cuello al 100 % dejan un escalón de brillo justo en la unión).
@@ -140,12 +148,26 @@ window.BottomBar {
     color: $text-muted;
   }
 
+  // Con el popup abierto (píldora `fused`) el texto pasa de título y artista a los tiempos (Stack con
+  // fundido en BottomBar.tsx): transcurrido a la izquierda, sobre lo ya relleno, y restante a la derecha.
+  .media-time {
+    font-family: $font;
+    font-size: 11px;
+    color: $text-muted;
+
+    &.elapsed {
+      color: $text;
+      font-weight: bold;
+    }
+  }
+
   // ── Sistema (sección derecha) ──────────────────────────────────────────────
 
   .sys-inner {
     @include bar-pill;
 
     &.fused { @include pill-fused(5px); }   // popup de audio o red abierto (widget/Popup.tsx); padding 3 + 2 del borde
+    &.framed { @include pill-framed; }      // el marco lo dibuja el popup
   }
 
   .sys-module {

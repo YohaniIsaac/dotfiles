@@ -1,7 +1,7 @@
 import { Astal, Gtk } from "ags/gtk4"
 import Pango from "gi://Pango"
 import { Popup } from "./Popup"
-import { spotify, mediaState, position, holdPosition, seekTo } from "./mpris"
+import { spotify, mediaState, position, holdPosition, seekTo, formatTime } from "./mpris"
 
 // ── Ventana popup — carátula grande + controles completos ────────────────────
 // Se abre/cierra con clic en la píldora central (BottomBar.tsx; el popup cuelga de ella), Esc, o clic afuera
@@ -18,13 +18,6 @@ function volIcon(vol: number): string {
   if (vol <= 0)   return "󰝟"
   if (vol < 0.5)  return "󰖀"
   return "󰕾"
-}
-
-function formatTime(totalSeconds: number): string {
-  const s   = Math.max(0, Math.floor(totalSeconds))
-  const m   = Math.floor(s / 60)
-  const sec = s % 60
-  return `${m}:${String(sec).padStart(2, "0")}`
 }
 
 export default function MediaPlayer() {

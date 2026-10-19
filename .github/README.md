@@ -582,7 +582,7 @@ Si cambias el nombre del wallpaper por defecto, actualiza también el fallback d
 Una barra por monitor, arriba (`~/.config/ags/widget/bars/BottomBar.tsx`):
 
 - **Izquierda:** workspaces del monitor
-- **Centro:** reloj y Spotify (clic → popup del reproductor)
+- **Centro:** reloj y Spotify. La píldora de Spotify se va llenando con la canción (borde de avance ondulado mientras suena); clic → popup del reproductor, y con el popup abierto la píldora cambia su texto de título y artista a tiempo transcurrido y restante
 - **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red (clic → popup de red), batería, notificaciones y apagado (clic → wlogout, clic derecho → bloquear con `lock.sh`)
 
 Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` directo. El script:
@@ -595,6 +595,8 @@ Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` di
 Para reiniciarla (por ejemplo, después de cambiar colores o código): `ags quit`.
 
 Los tres popups (Spotify, audio y red) comparten la ventana layer-shell y su colocación bajo el módulo que los abre: `widget/Popup.tsx`. Cada uno solo aporta su contenido.
+
+Cada popup cuelga de su píldora como **una sola silueta con un solo marco**: la ventana del popup sube hasta el borde superior de la píldora y dibuja ella el marco completo (píldora, cuello y tarjeta, con el mismo borde y el mismo glow, en `widget/popupShape.ts`) mientras la píldora oculta el suyo (clases `fused` y `framed`). Los clics, el hover y el tooltip de la píldora siguen funcionando: la parte de la ventana que la cubre no recibe entradas.
 
 ### Volumen y popup de audio
 

@@ -106,27 +106,30 @@ $popup-hover-fill: 0.92;
   padding: $padding;
 }
 
-// Píldora de origen de un popup abierto (clase `fused`, la pone widget/Popup.tsx): pierde las
-// esquinas y el borde inferiores, y el glow y la sombra de abajo, para que el popup cuelgue de ella
-// como una sola silueta.
-//   · Borde inferior: se le quita el GROSOR (no solo el color): con un borde inferior transparente
-//     GTK corta en diagonal los bordes laterales y dejaba una muesca de 1×2 px en cada esquina. El
-//     grosor perdido (2 px) se compensa con relleno inferior ($padding-bottom = el de la píldora + 2)
-//     para que la píldora no cambie de altura ni se mueva su contenido.
-//   · Glow: solo arriba y a los lados. Cada sombra se desplaza hacia arriba y se encoge 1 px (spread
-//     negativo) para que su cola borrosa NO llegue por debajo del borde inferior de la píldora: medido,
-//     con -2 px de desplazamiento y 3 px de desenfoque la cola dejaba una fila tenue de brillo justo en
-//     la unión con el popup (la barra tiene 3 px transparentes bajo la píldora de música).
-//     Condición: desplazamiento_y − |spread| + desenfoque ≤ 0.
+// Píldora de origen de un popup abierto. widget/Popup.tsx le pone dos clases, juntas al abrir:
+//
+// `fused` (pill-fused): pierde las esquinas y el borde inferiores, para que el popup cuelgue de ella como
+// una sola silueta. Se le quita el GROSOR del borde inferior (no solo el color): con un borde inferior
+// transparente GTK corta en diagonal los bordes laterales y dejaba una muesca de 1×2 px en cada esquina.
+// El grosor perdido (2 px) se compensa con relleno inferior ($padding-bottom = el de la píldora + 2) para
+// que la píldora no cambie de altura ni se mueva su contenido.
 @mixin pill-fused($padding-bottom) {
   border-bottom-width: 0;
   padding-bottom: $padding-bottom;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  box-shadow: 0 -2px 2px -1px rgba($primary, 0.6),
-              -2px -1px 2px -1px rgba($primary, 0.6),
-              2px -1px 2px -1px rgba($primary, 0.6),
-              inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+// `framed` (pill-framed): su marco —borde y glow— lo dibuja el popup (widget/popupShape.ts, drawPillBand)
+// encima de la píldora, con el mismo código que el marco del cuello y la tarjeta, así que aquí se oculta:
+// borde transparente (el relleno sigue debajo, como bajo el borde normal) y sin sombras salvo el brillo
+// interno de arriba. Antes la píldora conservaba un glow reducido de 1 px que se cortaba 2 filas antes
+// de la unión (un glow de CSS no se puede recortar en el borde inferior, y su cola se colaba bajo el
+// cuello): ahora no hay ningún glow de CSS que casar con el del popup. Al cerrar, `framed` se quita
+// primero (el marco vuelve a la píldora mientras el del popup se desvanece) y `fused` después.
+@mixin pill-framed {
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 // Título de sección dentro de un popup ("Salida", "Aplicaciones", "Wi-Fi").

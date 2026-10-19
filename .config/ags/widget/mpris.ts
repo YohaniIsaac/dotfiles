@@ -178,6 +178,31 @@ export const mediaWave = createExternal<WaveState>({ phase: 0, amp: 0 }, (set) =
   }
 })
 
+// ── Tiempos para la píldora con el popup abierto ─────────────────────────────
+
+// m:ss, como el seek del popup (los minutos no pasan a horas: 62:03).
+export function formatTime(totalSeconds: number): string {
+  const s   = Math.max(0, Math.floor(totalSeconds))
+  const m   = Math.floor(s / 60)
+  const sec = s % 60
+  return `${m}:${String(sec).padStart(2, "0")}`
+}
+
+// Transcurrido y restante de la canción. El restante se calcula con los segundos enteros que se muestran
+// (duración − transcurrido), para que siempre sumen la duración que enseña el popup: 241,57 s con la
+// posición en 147,96 → 2:27 + 1:34 = 4:01. (Redondeando el restante hacia arriba, en la posición 0 de una
+// canción de 176,4 s salía 0:00 y −2:57 con un popup que dice 2:56.) Sin duración (podcast, archivo local)
+// no hay restante; sin posición, "--:--".
+export const mediaTimes = createComputed(() => {
+  const m = mediaState()
+  const pos = position()
+  if (!m.available || pos < 0) return { elapsed: "--:--", remaining: "" }
+  return {
+    elapsed:   formatTime(pos),
+    remaining: m.length > 0 ? `-${formatTime(Math.floor(m.length) - Math.floor(pos))}` : "",
+  }
+})
+
 // ── Título para la píldora ───────────────────────────────────────────────────
 // La píldora es angosta: quita lo que no aporta del título (sufijos de remasterizaciones, "Official
 // Video", "(feat. …)" porque el artista ya sale aparte…). El título completo queda en el tooltip y

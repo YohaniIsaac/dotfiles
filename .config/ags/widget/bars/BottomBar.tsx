@@ -2,12 +2,12 @@ import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { exec, execAsync } from "ags/process"
 import { createPoll } from "ags/time"
-import { createExternal } from "ags"
+import { createExternal, createState } from "ags"
 import GLib from "gi://GLib"
 import Hyprland from "gi://AstalHyprland"
 import Battery  from "gi://AstalBattery"
 import Pango    from "gi://Pango"
-import { spotify, mediaState, mediaFraction, mediaWave, cleanTitle } from "../mpris"
+import { spotify, mediaState, mediaFraction, mediaWave, mediaTimes, cleanTitle } from "../mpris"
 import { drawMediaFill } from "../mediaFill"
 import { volState, volumeIcon, scrollVolume } from "../audio"
 import { togglePopup, registerPopupOrigin } from "../Popup"
@@ -249,23 +249,36 @@ function BatteryWidget() {
 
 // ── Spotify — píldora (estado reactivo compartido en widget/mpris.ts) ────────
 
-// Clase de la píldora: "paused" (opacidad baja) cuando no suena.
-// A nivel de módulo, no dentro de MediaPill: la barra instancia una píldora por monitor.
-const mediaPillClass = mediaState.as(m => m.playing ? "media-inner" : "media-inner paused")
-
 function MediaPill() {
   // El contenido (carátula + texto) va como overlay sobre el relleno; ver `$` del overlay
   let content!: Gtk.Widget
+  let fill!: Gtk.DrawingArea
+  // Con el popup abierto la píldora cambia su texto: de título y artista a tiempo transcurrido y restante.
+  // "Popup abierto" = la píldora tiene la clase `fused` (la pone widget/Popup.tsx al llegar el cuello).
+  const [timed, setTimed] = createState(false)
   return (
-    <overlay class={mediaPillClass}
+    <overlay class="media-inner"
       valign={Gtk.Align.CENTER}
       // Título y artista completos (la píldora los acorta y limpia el título)
       tooltipText={mediaState.as(m => m.artist ? `${m.title}\n${m.artist}` : m.title)}
       visible={mediaState.as(m => m.available)}
       $={(self) => {
         registerPopupOrigin("media-popup", self)
-        // Recorte redondeado: el relleno no se sale de las esquinas de la píldora
-        self.set_overflow(Gtk.Overflow.HIDDEN)
+        // `paused` (opacidad baja cuando no suena) y `fused` se ponen y quitan cada una por su lado. Con
+        // `class={estado.as(…)}` GTK reemplaza TODAS las clases en cada emisión del reproductor (pausa,
+        // canción nueva, volumen…) y con el popup abierto se perdía `fused`: la píldora recuperaba su
+        // borde inferior y quedaba una línea entre ella y el cuello.
+        const syncPaused = () => {
+          if (mediaState.get().playing) self.remove_css_class("paused")
+          else self.add_css_class("paused")
+        }
+        syncPaused()
+        const offPaused = mediaState.subscribe(syncPaused)
+        self.connect("destroy", offPaused)
+        self.connect("notify::css-classes", () => {
+          setTimed(self.has_css_class("fused"))
+          fill.queue_draw()        // el recorte del relleno cambia con `fused` (esquinas de abajo)
+        })
         // El tamaño de la píldora lo da el contenido, no el relleno
         self.set_measure_overlay(content, true)
 
@@ -302,6 +315,7 @@ function MediaPill() {
           con cada paso de la onda (mpris.ts), en las barras de todos los monitores. */}
       <drawingarea class="media-fill" hexpand vexpand canTarget={false}
         $={(area: Gtk.DrawingArea) => {
+          fill = area
           area.set_draw_func((a, cr, w, h) => drawMediaFill(a as Gtk.DrawingArea, cr, w, h))
           const offFrac  = mediaFraction.subscribe(() => area.queue_draw())
           const offWave  = mediaWave.subscribe(() => area.queue_draw())
@@ -318,10 +332,30 @@ function MediaPill() {
           visible={mediaState.as(m => !m.cover)} />
       </box>
 
-      <label class="media-title" label={mediaState.as(m => cleanTitle(m.title))}
-        maxWidthChars={18} ellipsize={Pango.EllipsizeMode.END} />
-      <label class="media-artist" label={mediaState.as(m => m.artist)}
-        maxWidthChars={14} ellipsize={Pango.EllipsizeMode.END} />
+      {/* Texto de la píldora: título y artista, o los tiempos con el popup abierto. Un Stack (homogéneo:
+          mide lo del más ancho de los dos) para que la píldora no cambie de ancho al cambiar de vista
+          y el cuello del popup, ya trazado con ese ancho, siga encajando. */}
+      <stack valign={Gtk.Align.CENTER}
+        transitionType={Gtk.StackTransitionType.CROSSFADE} transitionDuration={200}
+        // visibleChildName como prop se aplicaba antes de añadir los hijos ("Child name 'info' not found")
+        $={(self: Gtk.Stack) => {
+          const off = timed.subscribe(() => self.set_visible_child_name(timed.get() ? "time" : "info"))
+          self.connect("destroy", off)
+        }}
+      >
+        <box $type="named" name="info" spacing={6} valign={Gtk.Align.CENTER}>
+          <label class="media-title" label={mediaState.as(m => cleanTitle(m.title))}
+            maxWidthChars={18} ellipsize={Pango.EllipsizeMode.END} />
+          <label class="media-artist" label={mediaState.as(m => m.artist)}
+            maxWidthChars={14} ellipsize={Pango.EllipsizeMode.END} />
+        </box>
+        <box $type="named" name="time" spacing={6} valign={Gtk.Align.CENTER}>
+          <label class="media-time elapsed" label={mediaTimes.as(t => t.elapsed)}
+            xalign={0} hexpand widthChars={5} />
+          <label class="media-time remaining" label={mediaTimes.as(t => t.remaining)}
+            xalign={1} widthChars={6} />
+        </box>
+      </stack>
       </box>
     </overlay>
   )

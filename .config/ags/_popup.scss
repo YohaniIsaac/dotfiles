@@ -19,5 +19,8 @@
 // Relleno del cuello: el de las píldoras, siempre (para que no haya un escalón con la píldora).
 .popup-stem-color { color: rgba($surface, $fill-intensity); }
 
-// Borde y glow.
+// Borde y glow: los mismos valores que el borde y el box-shadow de las píldoras (pill-look en
+// _shared.scss), para que el cuello y la píldora se lean como un solo marco. El alfa del glow es su
+// intensidad; el desenfoque ($glow-size) está en popupShape.ts (GLOW_BLUR).
 .popup-border-color { color: rgba($primary, $border-intensity); }
+.popup-glow-color   { color: rgba($primary, $glow-intensity); }
