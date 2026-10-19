@@ -12,6 +12,9 @@
 .config/hypr/lock-font.conf
 .config/hypr/weather.conf
 
+# --- Por máquina, adb.service: celular que reconecta por Wi-Fi (IP de la red local: el repo es público) ---
+.config/adb/device.conf
+
 # --- Historia y runtime ---
 .bash_history
 .zsh_history
@@ -72,7 +75,10 @@
 .config/dconf/
 .config/go/
 .config/pulse/
-.config/systemd/
+# systemd/user: SÍ se trackean las unidades propias (kanata.service, adb.service). No los enlaces *.wants/
+# (los crea `systemctl enable`) ni lo que es de esta máquina (el timer de Forgejo usa ~/forgejo-local-runner)
+.config/systemd/user/*.wants/
+.config/systemd/user/forgejo-runner-cache-wipe.*
 .config/mimeapps.list
 .config/Android Open Source Project/
 .config/CuteCom/
@@ -91,6 +97,7 @@
 .config/opencode/
 .config/pavucontrol.ini
 .config/spotify/
+.config/vlc/
 .config/xfce4/
 
 # --- Claude: solo config, no datos de sesión ---

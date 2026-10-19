@@ -1,0 +1,23 @@
+[Unit]
+Description=Servidor adb compartido (terminal, scrcpy y Android Studio)
+# Solo corre si existe el adb del SDK de Android Studio: en una máquina sin él la unidad se salta sin
+# error (si no, Restart=always lo reintentaría cada segundo).
+ConditionPathExists=%h/Android/Sdk/platform-tools/adb
+
+[Service]
+# Celular a reconectar por Wi-Fi: ~/.config/adb/device.conf con ADB_DEVICE=<ip>:5555. Es local y no está
+# en git (el repo es público); sin ese archivo solo se levanta el servidor.
+EnvironmentFile=-%h/.config/adb/device.conf
+# Rechaza "adb kill-server" (lo que manda Android Studio al cerrarse). Para reiniciarlo: systemctl --user restart adb
+Environment=ADB_REJECT_KILL_SERVER=1
+# nodaemon: systemd mantiene el proceso en primer plano y lo vigila.
+ExecStart=%h/Android/Sdk/platform-tools/adb -L tcp:5037 server nodaemon
+# Espera a que el servidor escuche y reconecta el celular por Wi-Fi (el "-" ignora el fallo si no hay
+# ADB_DEVICE o el celular no está). "$$" llega al shell como "$": lo expande sh, no systemd.
+ExecStartPost=-/bin/sh -c '[ -n "$$ADB_DEVICE" ] && sleep 1 && %h/Android/Sdk/platform-tools/adb connect "$$ADB_DEVICE"'
+# Si Android Studio (u otro) lo mata, vuelve a levantarse solo.
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=default.target

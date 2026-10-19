@@ -32,6 +32,8 @@ zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
 
 # --- PATH ---
 export PATH="$HOME/.local/bin:$PATH"
+# adb del SDK de Android Studio primero: una sola versión de adb para terminal, scrcpy y el IDE
+[[ -d $HOME/Android/Sdk/platform-tools ]] && export PATH="$HOME/Android/Sdk/platform-tools:$PATH"
 export EDITOR=nvim
 export VISUAL=nvim
 
