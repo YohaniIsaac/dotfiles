@@ -494,14 +494,16 @@ Si pasa con la sesión bloqueada y no puedes escribir la contraseña, el desbloq
 │   ├── CLAUDE.md              # Reglas globales para Claude Code
 │   ├── settings.json          # Configuración de Claude Code
 │   └── claude-powerline.json  # Statusline de Claude Code (tema tokyo-night)
+├── .github/
+│   └── README.md              # Este documento (en .github/ para que GitHub lo muestre en la portada del repo)
 ├── .config/
+│   ├── adb/device.conf        # Celular que adb.service reconecta por Wi-Fi (local, NO trackeado)
 │   ├── ags/                   # Barra (AGS v3 / Astal GTK4) + popups de Spotify, audio y red
 │   ├── dotfiles/              # Documentación, paquetes e instalación
 │   │   ├── .claude/           # Contexto para Claude Code
 │   │   │   ├── CLAUDE.md      # Contexto del escritorio: reglas, trampas y estado
 │   │   │   ├── README.md      # Referencias de diseño (repos de los que se toman ideas)
 │   │   │   └── lock-harness/  # Arnés para probar hyprlock sin bloquear la sesión
-│   │   ├── README.md
 │   │   ├── packages.txt       # Paquetes del sistema (pacman + AUR)
 │   │   └── install.sh         # Instala packages.txt (ejecutar tras clonar)
 │   ├── hypr/                  # Hyprland: ventanas, keybindings, autostart…
@@ -524,7 +526,7 @@ Si pasa con la sesión bloqueada y no puedes escribir la contraseña, el desbloq
 │   ├── nvim/                  # Neovim (submódulo git)
 │   ├── ranger/rc.conf         # File manager TUI (solo los cambios sobre el default)
 │   ├── rofi/                  # Launcher y temas
-│   ├── systemd/user/          # kanata.service
+│   ├── systemd/user/          # kanata.service y adb.service
 │   └── starship.toml          # Prompt de shell
 ├── .local/bin/
 │   ├── hypr-generate-colors-wallpapers
@@ -704,11 +706,44 @@ Un nombre que fontconfig no conoce no da error: la aplicación cae en Noto Sans 
 
 ---
 
-## Servicios systemd de usuario
+## Servicios habilitados
 
-| Servicio | Función |
+Todo lo que arranca solo en esta config, para saber qué apagar en una máquina que no lo necesite. "En git" dice si la unidad viaja con el repo (las de `~/.config/systemd/user/` sí, salvo los enlaces `*.wants/` que crea `systemctl enable` y lo propio de esta máquina) o hay que crearla a mano. Ver lo activo: `systemctl --user list-unit-files --state=enabled` y `systemctl list-unit-files --state=enabled`.
+
+### systemd de usuario (`systemctl --user …`)
+
+| Servicio | Función | En git | Lo habilita | Para deshabilitarlo |
+|---|---|---|---|---|
+| `kanata.service` | Remapeo de teclado (scroll con el teclado) | Sí | `~/.config/kanata/setup.sh` (paso 25) | `systemctl --user disable --now kanata` |
+| `pipewire`, `pipewire-pulse` (+ sus `.socket`), `wireplumber` | Audio | Vienen con los paquetes | Paso 22 | `systemctl --user disable --now pipewire pipewire-pulse wireplumber` (la barra y su popup de audio dejan de funcionar) |
+| `adb.service` | Servidor `adb` único y vigilado, compartido por terminal, scrcpy y Android Studio (rechaza `adb kill-server`). Reconecta el celular por Wi-Fi al arrancar | Sí. Solo corre si existe `~/Android/Sdk/platform-tools/adb`; la IP del celular va en `~/.config/adb/device.conf` (`ADB_DEVICE=<ip>:5555`), local y fuera de git | A mano: `systemctl --user enable --now adb` | `systemctl --user disable --now adb` |
+| `forgejo-runner-cache-wipe.timer` | Borra cada domingo 03:00 la caché del runner local de Forgejo | **No**; hoy está **deshabilitado** | — | — |
+| `p11-kit-server.socket` | Servidor PKCS#11 (preset de Arch) | Viene con el paquete | — | `systemctl --user disable p11-kit-server.socket` |
+
+### systemd del sistema (`sudo systemctl …`)
+
+| Servicio | Función | Lo habilita | Para deshabilitarlo |
+|---|---|---|---|
+| `NetworkManager` (+ `-dispatcher`, `-wait-online`) | Red (Wi-Fi/Ethernet); la barra y su popup de red lo usan | Paso 15 | Solo si usas otro gestor de red |
+| `sddm` | Pantalla de inicio de sesión | Paso 15 | `sudo systemctl disable sddm` (entras por TTY y lanzas `Hyprland` a mano) |
+| `bluetooth` | Bluetooth | Paso 22 | `sudo systemctl disable --now bluetooth` |
+| `systemd-timesyncd` | Hora por red (`timedatectl set-ntp true`, paso 3) | Preset | `sudo systemctl disable --now systemd-timesyncd` |
+
+### Procesos que lanza Hyprland (no son servicios)
+
+Están en `~/.config/hypr/autostart.conf` como `exec-once`; para apagar uno, comenta su línea.
+
+| Proceso | Función |
 |---|---|
-| `kanata.service` | Remapeo de teclado (lo habilita `~/.config/kanata/setup.sh`, ver paso 25) |
+| `scripts/machine-setup.sh` | Crea lo propio de la máquina que no está en git (`host.conf`, colores por defecto) |
+| `scripts/restore-wallpaper.sh` | Arranca `awww` y pone el último fondo |
+| `swaync` | Notificaciones |
+| `polkit-gnome-authentication-agent-1` | Ventana de contraseña para acciones con privilegios |
+| `hypridle` | Apaga pantallas por inactividad y bloquea (sin auto-suspend) |
+| `scripts/lock-dim.sh restore - 20` | Devuelve el brillo guardado si el equipo se apagó con la sesión bloqueada |
+| `scripts/start-bar.sh` | Barra AGS (la relanza si cae) |
+| `wl-paste --watch cliphist store` | Historial del portapapeles |
+| `scripts/init-workspaces.sh` | Reparte los workspaces entre los monitores |
 
 ---
 
@@ -760,6 +795,7 @@ Siguiendo los pasos 18–25 queda todo lo que está en el repo. Esto no está en
 | Avatar de la pantalla de bloqueo | Copiar la foto como `~/.face` (sin ella se ve un icono) |
 | Fuentes Josefin Sans y Oxygen Mono (presets de la pantalla de bloqueo) | `~/.config/hypr/scripts/lock-font.sh install` (las baja de Google Fonts). Sin Josefin Sans el bloqueo usa `jetbrains` |
 | Ciudad del clima del bloqueo | Crear `~/.config/hypr/weather.conf` a mano (`LOCATION=…`, `COUNTRY=…`; ver [Pantalla de bloqueo](#pantalla-de-bloqueo-hyprlock)). Es local, no está en git |
+| Celular para `adb.service` | Crear `~/.config/adb/device.conf` a mano con `ADB_DEVICE=<ip>:5555` (ver [Servicios habilitados](#servicios-habilitados)). Es local, no está en git. Sin él, el servicio levanta `adb` y no reconecta nada |
 | Skill `scout` de Claude Code | Clonar `YohaniIsaac/scout-skills` en `~/personal-git/` y `ln -s ~/personal-git/scout-skills ~/.claude/skills/scout` |
 | Repos personales y de trabajo | Clonarlos en `~/personal-git/` y `~/git/` |
 | Reglas udev de herramientas embebidas (OpenOCD, J-Link, Joulescope) | Vienen con cada herramienta; se reinstalan con ella |
@@ -775,6 +811,8 @@ Y esto es **específico de esta laptop**. No lo copies tal cual; revísalo:
 ## Mantenimiento del repo
 
 - **Repos públicos:** este repo y el de Neovim son públicos en GitHub. Nada de claves, tokens ni URLs privadas.
+- **Este README vive en `.github/README.md`:** GitHub solo lo muestra en la portada del repo si está en la raíz, en `.github/` o en `docs/`, y la raíz de este repo es `$HOME` (un `README.md` ahí quedaría suelto entre tus archivos).
+- **Nada se trackea solo:** un archivo nuevo no entra al repo hasta que lo agregues, y el `.gitignore` más el ignore global ocultan varios tipos (`*.md`, `*.txt`, `*.log`, `.claude/`, carpetas enteras de `~/.config`). Al terminar un cambio conviene preguntarse qué archivos de configuración nuevos creó y decidir cada uno: trackearlo, o ignorarlo con una regla en `.gitignore` para que no estorbe en `dotfiles status`.
 - **Ignore global:** `~/.gitignore_global` ignora `.claude/`, `*.md` y `*.txt` en todos los repos, así que los archivos nuevos de ese tipo no aparecen en `dotfiles status` y hay que agregarlos con `dotfiles add -f <ruta>`. Los ya trackeados se actualizan normal, salvo los que están dentro de un directorio `.claude/` (como `.claude/settings.json`): ahí `dotfiles add` avisa "paths are ignored" y sale con error aunque igual los agrega, así que conviene usar `dotfiles add -u -- <ruta>`.
 - **Submódulo de Neovim:** los cambios se commitean dentro de `~/.config/nvim` y después se actualiza el puntero con `dotfiles add .config/nvim`. Al subir, primero `git -C ~/.config/nvim push` y después `dotfiles push`.
 - **Cuidado con el work-tree:** es todo `$HOME`, así que nada de `dotfiles reset --hard`, `checkout .` ni `stash` sin revisar antes.
