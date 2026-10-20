@@ -5,7 +5,7 @@ Parte de los [dotfiles](../../.github/README.md).
 Una barra por monitor, arriba (`~/.config/ags/widget/bars/BottomBar.tsx`):
 
 - **Izquierda:** workspaces del monitor
-- **Centro:** reloj y Spotify. La píldora de Spotify se va llenando con la canción (borde de avance ondulado mientras suena); clic → popup del reproductor, y con el popup abierto la píldora cambia su texto de título y artista a tiempo transcurrido y restante
+- **Centro:** reloj y Spotify. La píldora de Spotify se va llenando con la canción (borde de avance ondulado mientras suena); clic → popup del reproductor, y con el popup abierto la píldora cambia su texto de título y artista a tiempo transcurrido y restante y su relleno de progreso se desvanece (el progreso ya está en esos tiempos y en la barra del popup), para que píldora y popup sean de un mismo color; el relleno vuelve al cerrarlo
 - **Derecha:** CPU/RAM/temperatura (clic → btop), volumen (rueda = volumen general, clic → popup de audio), red (clic → popup de red), batería, notificaciones y apagado (clic → wlogout, clic derecho → bloquear con `lock.sh`)
 
 Hyprland la lanza con `~/.config/hypr/scripts/start-bar.sh`, no con `ags run` directo. El script:

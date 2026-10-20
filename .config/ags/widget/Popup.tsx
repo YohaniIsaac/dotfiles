@@ -294,6 +294,11 @@ export function Popup({
         self.connect("notify::visible", () => {
           if (self.visible) {
             if (unfuseTimer) { GLib.source_remove(unfuseTimer); unfuseTimer = 0 }
+            // `popup-open` desde el clic (no desde la fusión, al 85 % del deslizamiento): la píldora de música
+            // desvanece su relleno de progreso a la vez que baja el popup, para que no se vea el escalón de
+            // color con el cuello. Y la píldora pasa a ser de este popup desde ya: el temporizador de cierre
+            // de otro popup que acabe de cerrarse sobre la misma píldora no le quita las clases al nuevo.
+            if (pill) { fusedBy.set(pill, name); pill.add_css_class("popup-open") }
             bandOn = false
             band.queue_draw()
             startSlide()
@@ -310,7 +315,7 @@ export function Popup({
               if (fusedBy.get(p) === name) p.remove_css_class("framed")
               unfuseTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, UNFUSE_MS, () => {
                 unfuseTimer = 0
-                if (fusedBy.get(p) === name) { fusedBy.delete(p); p.remove_css_class("fused") }
+                if (fusedBy.get(p) === name) { fusedBy.delete(p); p.remove_css_class("fused"); p.remove_css_class("popup-open") }
                 return GLib.SOURCE_REMOVE
               })
             }

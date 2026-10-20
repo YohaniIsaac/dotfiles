@@ -249,6 +249,9 @@ function BatteryWidget() {
 
 // ── Spotify — píldora (estado reactivo compartido en widget/mpris.ts) ────────
 
+const FILL_OUT_MS = 200   // el relleno de progreso se desvanece en lo que tarda en abrirse el popup
+const FILL_IN_MS  = 300   // y vuelve, algo más lento, cuando el popup ya se fue
+
 function MediaPill() {
   // El contenido (carátula + texto) va como overlay sobre el relleno; ver `$` del overlay
   let content!: Gtk.Widget
@@ -256,6 +259,29 @@ function MediaPill() {
   // Con el popup abierto la píldora cambia su texto: de título y artista a tiempo transcurrido y restante.
   // "Popup abierto" = la píldora tiene la clase `fused` (la pone widget/Popup.tsx al llegar el cuello).
   const [timed, setTimed] = createState(false)
+
+  // Relleno de progreso: se desvanece mientras el popup está abierto (clase `popup-open`, que Popup.tsx pone
+  // al hacer clic y quita cuando el popup ya se desvaneció). Con el popup abierto el progreso ya está en el
+  // texto de la píldora (transcurrido y restante) y en la barra del popup, y el relleno terminaba en seco en
+  // el borde inferior de la píldora, sobre un cuello sin teñir: el escalón de color (~25–45 niveles) que
+  // hacía parecer la píldora una pieza aparte. Además, sin relleno visible no hace falta repintar la onda.
+  let fillOpacity = 1
+  let fillFrom = 1, fillTo = 1, fillT0 = 0, fillMs = FILL_OUT_MS, fillTick = 0
+  const fadeFill = (to: number) => {
+    if (to === fillTo) return
+    fillFrom = fillOpacity
+    fillTo = to
+    fillT0 = GLib.get_monotonic_time()
+    fillMs = to < fillOpacity ? FILL_OUT_MS : FILL_IN_MS
+    if (fillTick) return                  // ya hay un fundido en marcha: sigue hacia el nuevo destino
+    fillTick = fill.add_tick_callback(() => {
+      const p = Math.min(1, (GLib.get_monotonic_time() - fillT0) / 1000 / fillMs)
+      fillOpacity = fillFrom + (fillTo - fillFrom) * (1 - Math.pow(1 - p, 3))   // easeOutCubic
+      fill.queue_draw()
+      if (p >= 1) { fillTick = 0; return GLib.SOURCE_REMOVE }
+      return GLib.SOURCE_CONTINUE
+    })
+  }
   return (
     <overlay class="media-inner"
       valign={Gtk.Align.CENTER}
@@ -277,6 +303,7 @@ function MediaPill() {
         self.connect("destroy", offPaused)
         self.connect("notify::css-classes", () => {
           setTimed(self.has_css_class("fused"))
+          fadeFill(self.has_css_class("popup-open") ? 0 : 1)
           fill.queue_draw()        // el recorte del relleno cambia con `fused` (esquinas de abajo)
         })
         // El tamaño de la píldora lo da el contenido, no el relleno
@@ -316,9 +343,10 @@ function MediaPill() {
       <drawingarea class="media-fill" hexpand vexpand canTarget={false}
         $={(area: Gtk.DrawingArea) => {
           fill = area
-          area.set_draw_func((a, cr, w, h) => drawMediaFill(a as Gtk.DrawingArea, cr, w, h))
-          const offFrac  = mediaFraction.subscribe(() => area.queue_draw())
-          const offWave  = mediaWave.subscribe(() => area.queue_draw())
+          area.set_draw_func((a, cr, w, h) => drawMediaFill(a as Gtk.DrawingArea, cr, w, h, fillOpacity))
+          // Con el relleno desvanecido (popup abierto) no se repinta: la onda a 15 fps no se vería
+          const offFrac  = mediaFraction.subscribe(() => { if (fillOpacity > 0.004) area.queue_draw() })
+          const offWave  = mediaWave.subscribe(() => { if (fillOpacity > 0.004) area.queue_draw() })
           area.connect("destroy", () => { offFrac(); offWave() })
         }}
       />

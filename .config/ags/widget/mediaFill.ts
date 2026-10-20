@@ -32,9 +32,12 @@ function clipInterior(cr: Cairo.Context, w: number, h: number, squareBottom: boo
   cr.clip()
 }
 
-export function drawMediaFill(area: Gtk.DrawingArea, cr: Cairo.Context, w: number, h: number) {
+// `opacity` (0–1) multiplica todo el relleno: BottomBar.tsx lo desvanece a 0 mientras el popup está
+// abierto, para que la píldora y el popup sean de un mismo color (el relleno terminaba en seco en el
+// borde inferior de la píldora, sobre un cuello sin teñir).
+export function drawMediaFill(area: Gtk.DrawingArea, cr: Cairo.Context, w: number, h: number, opacity = 1) {
   const frac = mediaFraction.peek()
-  if (frac < 0) return                       // sin duración (podcast, archivo local) o sin Spotify
+  if (frac < 0 || opacity <= 0.004) return   // sin duración (podcast, archivo local), sin Spotify o desvanecido
   clipInterior(cr, w, h, area.get_parent()?.has_css_class("fused") ?? false)
   const c = area.get_color()
   const x0 = frac * w
@@ -49,8 +52,8 @@ export function drawMediaFill(area: Gtk.DrawingArea, cr: Cairo.Context, w: numbe
   // Relleno con estela: poco intenso a la izquierda, más fuerte en el frente
   path(); cr.lineTo(0, h); cr.lineTo(0, 0); cr.closePath()
   const g = new Cairo.LinearGradient(0, 0, Math.max(x0, 1), 0)
-  g.addColorStopRGBA(0, c.red, c.green, c.blue, c.alpha * 0.35)
-  g.addColorStopRGBA(1, c.red, c.green, c.blue, Math.min(1, c.alpha * 1.6))
+  g.addColorStopRGBA(0, c.red, c.green, c.blue, c.alpha * 0.35 * opacity)
+  g.addColorStopRGBA(1, c.red, c.green, c.blue, Math.min(1, c.alpha * 1.6) * opacity)
   cr.setSource(g)
   cr.fill()
 
@@ -58,7 +61,7 @@ export function drawMediaFill(area: Gtk.DrawingArea, cr: Cairo.Context, w: numbe
   if (x0 > WAVE_AMP + 2) {
     path()
     cr.setLineWidth(1.5)
-    cr.setSourceRGBA(c.red, c.green, c.blue, HEAD_ALPHA)
+    cr.setSourceRGBA(c.red, c.green, c.blue, HEAD_ALPHA * opacity)
     cr.stroke()
   }
 }

@@ -105,8 +105,10 @@ window.BottomBar {
     &.framed { @include pill-framed; }     // el marco lo dibuja el popup
 
     // Pausado + popup abierto: opacidad completa, igual que el cuello del popup (si no, la píldora al
-    // 60 % y el cuello al 100 % dejan un escalón de brillo justo en la unión).
-    &.paused.fused { opacity: 1; }
+    // 60 % y el cuello al 100 % dejan un escalón de brillo justo en la unión). Con `popup-open` (desde el
+    // clic) y no con `fused` (al 85 % del deslizamiento): así la píldora ya está al brillo del cuello cuando
+    // éste aparece, en vez de unos 3 niveles más oscura durante los últimos ~150 ms de la apertura.
+    &.paused.popup-open { opacity: 1; }
   }
 
   .media-content {
