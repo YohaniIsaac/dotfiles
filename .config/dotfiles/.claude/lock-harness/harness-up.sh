@@ -46,4 +46,16 @@ out=$(hc monitors -j | jq -r '[.[] | select(.name | startswith("HEADLESS"))][0].
 hc keyword monitor "WAYLAND-1,disable" >/dev/null
 hc keyword monitor "$out,1920x1080@60,0x0,1" >/dev/null
 echo "$out" > "$W/out"
+
+# Ajustes de entrada y foco del usuario. El anidado arranca con los valores por defecto de Hyprland, y varios cambian
+# cómo se reparte el foco (p. ej. `input:mouse_refocus = false`: un clic en la ventana ya activa no le quita el foco a
+# una capa): probar con los valores por defecto da falsos positivos (pasó con el cierre de los popups, 2026-10-20).
+# Se copian solo los que el usuario ha fijado en su configuración.
+for opt in input:follow_mouse input:mouse_refocus input:float_switch_override_focus input:focus_on_close \
+           misc:layers_hog_keyboard_focus misc:focus_on_activate general:no_focus_fallback; do
+  json=$(hyprctl getoption "$opt" -j 2>/dev/null) || continue
+  [ "$(jq -r '.set' <<<"$json")" = true ] || continue
+  val=$(jq -r '.int // .float // .str' <<<"$json")
+  hc keyword "$opt" "$val" >/dev/null && echo "  copiado del usuario: $opt = $val"
+done
 echo "listo: display=$wl instancia=${sig:0:20}… salida=$out  estado en $W"

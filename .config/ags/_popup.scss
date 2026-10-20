@@ -6,6 +6,15 @@
 
 @use './shared' as *;
 
+// Ventana a pantalla completa que recoge los clics fuera de los popups (widget/PopupBackdrop.tsx): invisible.
+window.PopupBackdrop { background: transparent; }
+// Un punto de 1 px con alfa 1/255 en la esquina: sin ningún nodo de dibujo la ventana no se mapea (ver PopupBackdrop.tsx).
+.popup-backdrop-dot {
+  min-width: 1px;
+  min-height: 1px;
+  background: rgba(0, 0, 0, 0.004);
+}
+
 // Relleno de la tarjeta: transparente en reposo (igual que la barra), más sólido al pasar el mouse
 // (para leer mejor). El hover es del grupo entero; la transición de color anima el cambio.
 .popup-shape {

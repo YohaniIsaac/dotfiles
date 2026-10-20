@@ -52,6 +52,40 @@ const controls = new Map<string, PopupControl>()
 // red), el temporizador de cierre del primero no debe quitarle la clase al segundo.
 const fusedBy = new Map<Gtk.Widget, string>()
 
+// ── Cierre al pulsar fuera ────────────────────────────────────────────────────────────────────
+// Un popup ya se cierra con Esc y al perder el foco: un clic en una ventana se lo da a ella. Faltaban los
+// clics que no cambian el foco, y se cubren así:
+//   · Ventanas y escritorio: una ventana transparente a pantalla completa por monitor (PopupBackdrop.tsx), por
+//     encima de las ventanas y debajo de los popups, visible solo mientras haya algún popup abierto
+//     (`syncBackdrops`). Recoge el clic y lo consume. Dejaba de ser fiable fiarse del foco: con
+//     `input:mouse_refocus = false` un clic en la ventana que ya estaba activa NO le quita el foco del teclado
+//     al popup (Hyprland no ve cambio de foco), así que el popup no se enteraba (medido en el anidado).
+//   · La barra: `watchOutsideClicks` pone en cada ventana de la barra un gesto (fase de captura) que cierra
+//     los popups con cualquier clic fuera de los módulos que abren uno (esos conmutan por su cuenta). El clic
+//     no se consume: sigue a su destino (cambiar de workspace, etc.) además de cerrar el popup. La franja de la
+//     barra queda fuera de la región de entrada del fondo, así que sus clics y su hover son de la barra.
+const openPopups = new Set<string>()
+const backdrops = new Set<Gtk.Window>()
+
+export function closeAllPopups() {
+  for (const c of controls.values()) if (c.win.visible) c.win.visible = false
+}
+
+const syncBackdrops = () => {
+  const on = openPopups.size > 0
+  for (const b of backdrops) if (b.visible !== on) b.visible = on
+}
+
+export function registerBackdrop(win: Gtk.Window) { backdrops.add(win) }
+
+// Ventana de la barra de cada monitor (la registra `watchOutsideClicks`): el fondo deja libre su franja.
+const bars = new Map<string, Astal.Window>()
+// Franja vertical que ocupa la barra del monitor: desde su margen superior hasta su borde inferior.
+export function barStrip(connector: string): { top: number; bottom: number } {
+  const bar = bars.get(connector)
+  return bar ? { top: bar.marginTop, bottom: bar.marginTop + bar.get_height() } : { top: 8, bottom: 44 }
+}
+
 // Píldora de la que cuelga el popup, a partir del widget donde se hizo clic (un módulo del
 // sistema, o la propia píldora de música).
 const PILL_CLASSES = ["media-inner", "sys-inner"]
@@ -292,6 +326,9 @@ export function Popup({
         controls.set(name, { win: self as Astal.Window, place })
 
         self.connect("notify::visible", () => {
+          if (self.visible) openPopups.add(name)
+          else openPopups.delete(name)
+          syncBackdrops()
           if (self.visible) {
             if (unfuseTimer) { GLib.source_remove(unfuseTimer); unfuseTimer = 0 }
             // `popup-open` desde el clic (no desde la fusión, al 85 % del deslizamiento): la píldora de música
@@ -390,6 +427,9 @@ export function togglePopup(name: string, anchor: Gtk.Widget) {
   if (bar?.gdkmonitor && pill && c.place(pill, bar)) win.gdkmonitor = bar.gdkmonitor
   else c.place(null, null)
   win.visible = true
+  // Un solo popup a la vez. Se cierran los demás DESPUÉS de abrir este: si comparten píldora (audio → red),
+  // `fusedBy` ya apunta al nuevo y el cierre del anterior no le quita el marco a la píldora.
+  for (const [n, other] of controls) if (n !== name && other.win.visible) other.win.visible = false
 }
 
 // ── Apertura por comando (`ags request popup <nombre> [monitor]`) ────────────────────────────────
@@ -402,6 +442,28 @@ export function registerPopupOrigin(name: string, widget: Gtk.Widget) {
   const list = origins.get(name) ?? []
   list.push(widget)
   origins.set(name, list)
+}
+
+// Gesto de la ventana de la barra: cierra los popups con un clic fuera de los módulos que abren uno (los
+// orígenes registrados arriba). Fase de captura y sin reclamar la secuencia: el clic sigue a su destino.
+export function watchOutsideClicks(bar: Gtk.Window, connector: string) {
+  bars.set(connector, bar as Astal.Window)
+  const click = new Gtk.GestureClick()
+  click.set_button(0)                                   // cualquier botón
+  click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+  click.connect("pressed", (_g: Gtk.GestureClick, _n: number, x: number, y: number) => {
+    if (openPopups.size === 0) return
+    const p = new Graphene.Point({ x, y })
+    for (const list of origins.values()) {
+      for (const w of list) {
+        if ((w.get_root() as unknown) !== bar) continue
+        const [ok, r] = w.compute_bounds(bar)
+        if (ok && r.contains_point(p)) return           // un origen de popup: conmuta él solo
+      }
+    }
+    closeAllPopups()
+  })
+  bar.add_controller(click)
 }
 
 export function openPopup(name: string, connector?: string): string {

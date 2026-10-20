@@ -10,7 +10,7 @@ import Pango    from "gi://Pango"
 import { spotify, mediaState, mediaFraction, mediaWave, mediaTimes, cleanTitle } from "../mpris"
 import { drawMediaFill } from "../mediaFill"
 import { volState, volumeIcon, scrollVolume } from "../audio"
-import { togglePopup, registerPopupOrigin } from "../Popup"
+import { togglePopup, registerPopupOrigin, watchOutsideClicks } from "../Popup"
 import { netIcon } from "../network"
 
 const HOME = GLib.get_home_dir()
@@ -603,6 +603,7 @@ export default function BottomBar(gdkmonitor: Gdk.Monitor) {
       anchor={TOP | LEFT | RIGHT}
       application={app}
       marginTop={8}
+      $={(self) => watchOutsideClicks(self, connector)}
     >
       <centerbox>
         <box $type="start" halign={Gtk.Align.START} marginStart={8}>

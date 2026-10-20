@@ -6,6 +6,7 @@ import MediaPlayer from "./widget/MediaPlayer"
 import AudioPopup  from "./widget/AudioPopup"
 import NetworkPopup from "./widget/NetworkPopup"
 import BottomBar   from "./widget/bars/BottomBar"
+import PopupBackdrop from "./widget/PopupBackdrop"
 import { openPopup } from "./widget/Popup"
 import Hyprland from "gi://AstalHyprland"
 
@@ -32,6 +33,7 @@ app.start({
       const monitor = monitors.get_item(i) as Gdk.Monitor
       if (!monitor) continue
       BottomBar(monitor)
+      PopupBackdrop(monitor)
     }
   },
 })

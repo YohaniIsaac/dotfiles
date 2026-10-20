@@ -15,11 +15,24 @@ cd ~/.config/dotfiles/.claude/lock-harness
 LOCK_SH=/ruta/lock.sh ./locktest.sh                       # lo mismo con una copia de lock.sh (usa los scripts hermanos de su carpeta)
 ./cpu.sh ~/.config/hypr/hyprlock.conf 30                  # CPU de hyprlock + hijos (ms por segundo) con esa config, 30 s
 ./dimtest.sh                                              # pruebas de lock-dim.sh (brillo de la laptop, monitores DDC y filtro) con falsos; no necesita el anidado
+./vclick-build.sh                                         # compila vclick, un puntero virtual con clic para el anidado (ver abajo)
 ./harness-down.sh
 ```
 
 - Estado en `$LOCK_HARNESS_DIR` (por defecto `$XDG_RUNTIME_DIR/lock-harness`): firma de la instancia,
   display, `dump.so` (se compila al levantar), fotogramas y logs.
+- **Clics en el anidado (`vclick`):** `./vclick-build.sh` compila a `$LOCK_HARNESS_DIR/vclick` un cliente del protocolo
+  `zwlr_virtual_pointer_v1` (el XML va en `vclick/`; el de wlr-protocols no suele estar instalado). Mueve el cursor y hace
+  clic solo en el compositor anidado, nunca en el del usuario:
+  `WAYLAND_DISPLAY=$(cat $LOCK_HARNESS_DIR/wl) EXT_W=1920 EXT_H=1080 vclick move X Y | click X Y [272 izq|273 der|274 medio] | down|up [botón]`.
+  `EXT_W/EXT_H` = tamaño del layout del anidado (dos salidas de 1920×1080 en fila: 3840×1080). Una capa recién mapeada solo
+  recibe el puntero tras un movimiento: para probar un clic, llegar al punto en dos `move` antes del `click`. Lo escribió
+  Claude el 2026-10-20 para probar el cierre de los popups al pulsar fuera.
+- **Ajustes de entrada y foco del usuario:** `harness-up.sh` copia al anidado los que el usuario ha fijado (`input:follow_mouse`,
+  `input:mouse_refocus`, `misc:layers_hog_keyboard_focus`…). El anidado arranca con los valores por defecto de Hyprland y esos
+  ajustes cambian cómo se reparte el foco: sin copiarlos, el cierre de un popup por pérdida de foco funcionaba en las pruebas y no
+  en la sesión real (`mouse_refocus = false`, 2026-10-20). Si se prueba algo de foco o de clics, comprobar con
+  `hyprctl --instance <firma> getoption …` que quedaron igual que en la sesión real.
 - `SETTLE=4` espera más antes de volcar (imágenes pesadas); `EXTRA_ENV="PATH=…/stub:$PATH XDG_CACHE_HOME=…"`
   corre hyprlock con otro entorno (un `playerctl` falso, otra caché…); `KEEP=1` deja el bloqueo puesto
   (se suelta con `./unlock.sh`).

@@ -21,6 +21,13 @@ Los tres popups (Spotify, audio y red) comparten la ventana layer-shell y su col
 
 Cada popup cuelga de su píldora como **una sola silueta con un solo marco**: la ventana del popup sube hasta el borde superior de la píldora y dibuja ella el marco completo (píldora, cuello y tarjeta, con el mismo borde y el mismo glow, en `widget/popupShape.ts`) mientras la píldora oculta el suyo (clases `fused` y `framed`). Los clics, el hover y el tooltip de la píldora siguen funcionando: la parte de la ventana que la cubre no recibe entradas.
 
+**Cierre de los popups.** Solo hay uno abierto a la vez (abrir uno cierra el anterior) y se cierra con cualquiera de estas cosas:
+
+- **Esc**, o al **perder el foco**: cambiar de ventana con el teclado, abrir rofi…
+- Un **clic en cualquier otro sitio**: una ventana (la terminal, el IDE, el navegador) o el escritorio vacío, de cualquier monitor. Lo recoge una ventana transparente a pantalla completa por monitor, por encima de las ventanas y por debajo de los popups (`widget/PopupBackdrop.tsx`), que solo existe mientras hay un popup abierto y deja libre la franja de la barra. El clic que cierra se **consume**: no llega a la ventana de debajo (hace falta otro clic para usarla), como en cualquier menú. No se puede fiar solo del foco: con `input:mouse_refocus = false` en Hyprland (el ajuste de este escritorio) un clic en la ventana que ya estaba activa no le quita el foco al popup.
+- Un clic en la **barra** fuera de los módulos que abren un popup (el reloj, los workspaces, los huecos…): cierra el popup y el clic sigue a su destino, así que un clic en un workspace lo cambia y cierra el popup a la vez. Los módulos que abren un popup (la píldora de Spotify, el volumen y la red) lo conmutan por su cuenta.
+- Con una ventana a pantalla completa real (por ejemplo Spotify en su workspace) Hyprland oculta la capa de arriba: ahí el clic no cierra, solo Esc y el cambio de foco (la barra tampoco se ve).
+
 ## Volumen y popup de audio
 
 - **Rueda** sobre el módulo de volumen: sube o baja el volumen general de a 5 % (tope 100 %; subir también des-silencia). En el touchpad los deltas fraccionarios se acumulan hasta completar un paso.
