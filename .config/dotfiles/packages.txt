@@ -194,7 +194,12 @@ yay
 # Android / contenedores (optional)
 # =============================================================
 
+# scrcpy y lld son para `cel` (celular de pruebas, ~/.local/share/cel/README.md); también hace falta clang,
+# que está arriba. scrcpy ya trae android-tools (adb).
+
 # android-studio
+# scrcpy
+# lld
 # docker
 # docker-compose
 # act

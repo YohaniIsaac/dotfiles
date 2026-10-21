@@ -49,6 +49,7 @@ Para instalar Arch desde la ISO, con todos los pasos y sus porqués, y para lo q
 | Barra y popups de Spotify, audio y red | [`.config/ags/README.md`](../.config/ags/README.md) |
 | Colores dinámicos a partir del wallpaper | [`.config/matugen/README.md`](../.config/matugen/README.md) |
 | Remapeo de teclado (Caps Lock + `hjkl` = scroll) | [`.config/kanata/README.md`](../.config/kanata/README.md) |
+| Celular de pruebas con el táctil roto, por scrcpy (`cel`) | [`.local/share/cel/README.md`](../.local/share/cel/README.md) |
 | Neovim: plugins y atajos | [README de Neovim](https://github.com/YohaniIsaac/nvim#readme) (repo propio, submódulo en `.config/nvim`) |
 
 ## Estructura
@@ -74,7 +75,8 @@ Para instalar Arch desde la ISO, con todos los pasos y sus porqués, y para lo q
 │   ├── rofi/                  # Launcher y temas
 │   ├── systemd/user/          # kanata.service y adb.service
 │   └── starship.toml          # Prompt de shell
-├── .local/bin/                # hypr-generate-colors-wallpapers, joulescope
+├── .local/bin/                # hypr-generate-colors-wallpapers, joulescope, cel
+├── .local/share/cel/          # Fuentes de cel (celular de pruebas por scrcpy); el binario touchgrab se compila en cada máquina
 ├── Pictures/wallpapers/       # Solo groot_1.jpg está en el repo; el resto se agrega a mano
 ├── .gitconfig, .gitignore, .gitignore_global, .minirc.dfl, .zshrc
 └── .ssh/config                # Solo la config, nunca las claves

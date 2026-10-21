@@ -33,7 +33,11 @@
 .cmake/
 .dotfiles/
 .gnupg/
-.local/share/
+# .local/share/ se ignora entero salvo cel/ (fuentes y scripts de `cel`, el celular de pruebas). El binario
+# touchgrab no se versiona: build.sh lo compila en cada máquina
+.local/share/*
+!.local/share/cel/
+.local/share/cel/touchgrab
 .local/state/
 .local/lib/
 .local/bin/claude

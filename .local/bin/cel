@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# cel: abre scrcpy en el celular de pruebas (táctil roto) y se asegura de que el vigilante del
+# celular (touchwatch.sh) esté corriendo. El vigilante reserva el táctil físico mientras exista un
+# scrcpy-server y lo suelta cuando no hay ninguno, aunque el PC o la red fallen; protege también un
+# `scrcpy` abierto a mano. Fuente y documentación: ~/.local/share/cel/ (README.md).
+#
+# Qué celular: CEL_DEVICE=<ip>:5555 en el entorno, o ADB_DEVICE=<ip>:5555 en ~/.config/adb/device.conf
+# (local, fuera de git; es el mismo archivo que lee adb.service). Sin ninguno, el único celular que haya
+# conectado por cable. Los argumentos que reciba se pasan a scrcpy.
+set -u
+
+SRC="$HOME/.local/share/cel"
+REMOTE=/data/local/tmp
+
+die() { echo "cel: $*" >&2; exit 1; }
+
+# adb del SDK de Android Studio si existe: es el binario del servidor de adb.service, así cliente y servidor son
+# el mismo (un adb distinto en el PATH, por ejemplo al lanzar desde un atajo, con otra versión del protocolo
+# reiniciaría el servidor compartido y cortaría a Android Studio). Si no, el del PATH. scrcpy también lee $ADB.
+find_adb() {
+    local c
+    [ -n "${ADB:-}" ] && return 0
+    for c in "$HOME/Android/Sdk/platform-tools/adb" "$(command -v adb)"; do
+        [ -x "$c" ] && ADB=$c && return 0
+    done
+    return 1
+}
+
+# Celular de ~/.config/adb/device.conf (líneas CLAVE=valor, el formato que lee systemd).
+device_from_conf() {
+    local f="$HOME/.config/adb/device.conf" k v
+    [ -r "$f" ] || return 0
+    while IFS='=' read -r k v || [ -n "$k" ]; do
+        [ "$k" = ADB_DEVICE ] && DEV=${v//[[:space:]\"\']/}
+    done < "$f"
+    return 0
+}
+
+remote_sha() { "${ADBC[@]}" shell "sha256sum $REMOTE/$1 2>/dev/null" 2>/dev/null | tr -d '\r' | cut -d' ' -f1; }
+
+# Copia $SRC/$1 al celular si falta o es distinto (sha256). Va a un nombre temporal y se renombra, que es atómico:
+# el vigilante, que puede lanzar touchgrab en cualquier momento, nunca ve un archivo a medio copiar. Devuelve 0
+# si copió y 1 si ya estaba igual.
+push_if_changed() {
+    local f=$1 want
+    want=$(sha256sum "$SRC/$f" | cut -d' ' -f1)
+    [ "$want" = "$(remote_sha "$f")" ] && return 1
+    "${ADBC[@]}" push "$SRC/$f" "$REMOTE/$f.new" >/dev/null &&
+        "${ADBC[@]}" shell "chmod 755 $REMOTE/$f.new && mv -f $REMOTE/$f.new $REMOTE/$f" >/dev/null 2>&1
+    [ "$want" = "$(remote_sha "$f")" ] || die "no pude copiar $f al celular"
+    return 0
+}
+
+# El vigilante en marcha sigue con el script viejo en memoria: se cierra (con su touchgrab) para que arranque el nuevo.
+restart_watcher() {
+    "${ADBC[@]}" shell "pkill -f '^sh $REMOTE/[t]ouchwatch.sh'; sleep 1" >/dev/null 2>&1
+}
+
+# Arma el vigilante: si ya hay uno, el nuevo se cierra solo.
+arm_watcher() {
+    "${ADBC[@]}" shell "setsid nohup sh $REMOTE/touchwatch.sh >/dev/null 2>&1 &"
+}
+
+main() {
+    command -v scrcpy >/dev/null || die "falta scrcpy (sudo pacman -S scrcpy)"
+    find_adb || die "falta adb (sudo pacman -S android-tools, o el SDK de Android Studio)"
+    export ADB
+    [ -f "$SRC/touchgrab.c" ] && [ -f "$SRC/touchwatch.sh" ] || die "faltan los fuentes en $SRC"
+
+    DEV="${CEL_DEVICE:-}"
+    [ -n "$DEV" ] || device_from_conf
+    local sel=()
+    if [ -n "$DEV" ]; then
+        sel=(-s "$DEV")
+        "$ADB" connect "$DEV" >/dev/null 2>&1
+    fi
+    ADBC=("$ADB" "${sel[@]}")
+    if [ "$("${ADBC[@]}" get-state 2>/dev/null)" != device ]; then
+        if [ -n "$DEV" ]; then
+            die "$DEV no responde (¿celular reiniciado? conecta el cable y: adb tcpip 5555)"
+        fi
+        die "no hay un único celular conectado por adb (por cable, o ADB_DEVICE=<ip>:5555 en ~/.config/adb/device.conf)"
+    fi
+
+    # touchgrab no va en git: se compila aquí la primera vez y cuando cambia touchgrab.c (si entonces falla la
+    # compilación, por ejemplo sin clang, se sigue con el binario que ya había).
+    if [ ! -x "$SRC/touchgrab" ]; then
+        echo "cel: compilando touchgrab…" >&2
+        bash "$SRC/build.sh" || die "no pude compilar touchgrab"
+    elif [ "$SRC/touchgrab.c" -nt "$SRC/touchgrab" ]; then
+        echo "cel: touchgrab.c cambió, recompilando…" >&2
+        bash "$SRC/build.sh" || echo "cel: no pude recompilar; sigo con el touchgrab anterior" >&2
+    fi
+
+    # Copia los archivos al celular si faltan o cambiaron (sobreviven reinicios; un borrado de datos los quitaría).
+    push_if_changed touchgrab
+    push_if_changed touchwatch.sh && restart_watcher
+
+    arm_watcher
+    exec scrcpy "${sel[@]}" -S "$@"
+}
+
+# Con `source cel` solo se definen las funciones (así se prueban sin abrir scrcpy).
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

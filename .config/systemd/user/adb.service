@@ -15,6 +15,10 @@ ExecStart=%h/Android/Sdk/platform-tools/adb -L tcp:5037 server nodaemon
 # Espera a que el servidor escuche y reconecta el celular por Wi-Fi (el "-" ignora el fallo si no hay
 # ADB_DEVICE o el celular no está). "$$" llega al shell como "$": lo expande sh, no systemd.
 ExecStartPost=-/bin/sh -c '[ -n "$$ADB_DEVICE" ] && sleep 1 && %h/Android/Sdk/platform-tools/adb connect "$$ADB_DEVICE"'
+# Arma el vigilante del táctil en el celular (touchwatch.sh, que copia `cel`; ver ~/.local/share/cel/README.md).
+# Si ya hay uno, el nuevo se cierra solo; si el celular o el script no están, se ignora. timeout: un celular
+# colgado no deja la unidad en "activating".
+ExecStartPost=-/bin/sh -c '[ -n "$$ADB_DEVICE" ] && timeout 20 %h/Android/Sdk/platform-tools/adb -s "$$ADB_DEVICE" shell "setsid nohup sh /data/local/tmp/touchwatch.sh >/dev/null 2>&1 &"'
 # Si Android Studio (u otro) lo mata, vuelve a levantarse solo.
 Restart=always
 RestartSec=1

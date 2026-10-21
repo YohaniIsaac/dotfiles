@@ -50,7 +50,8 @@ Siguiendo los pasos 18–25 de la [guía de instalación](INSTALL.md#post-instal
 | Avatar de la pantalla de bloqueo | Copiar la foto como `~/.face` (sin ella se ve un icono) |
 | Fuentes Josefin Sans y Oxygen Mono (presets de la pantalla de bloqueo) | `~/.config/hypr/scripts/lock-font.sh install` (las baja de Google Fonts). Sin Josefin Sans el bloqueo usa `jetbrains` |
 | Ciudad del clima del bloqueo | Crear `~/.config/hypr/weather.conf` a mano (`LOCATION=…`, `COUNTRY=…`; ver [Pantalla de bloqueo](../hypr/LOCKSCREEN.md)). Es local, no está en git |
-| Celular para `adb.service` | Crear `~/.config/adb/device.conf` a mano con `ADB_DEVICE=<ip>:5555` (ver [Servicios habilitados](SERVICES.md)). Es local, no está en git. Sin él, el servicio levanta `adb` y no reconecta nada |
+| Celular para `adb.service` y `cel` | Crear `~/.config/adb/device.conf` a mano con `ADB_DEVICE=<ip>:5555` (ver [Servicios habilitados](SERVICES.md)). Es local, no está en git. Sin él, el servicio levanta `adb` y no reconecta nada, y `cel` usa el único celular conectado por cable. La IP cambia con la red: se edita ahí |
+| `cel` (celular con el táctil roto, por scrcpy) | Instalar `scrcpy`, `clang` y `lld` (están comentados en `packages.txt`). La primera vez, con el cable: `adb tcpip 5555` y aceptar la llave RSA en el celular (`~/.android/` no va a git). `cel` compila `touchgrab` y copia el vigilante al celular solo. Paso a paso en el [README de `cel`](../../.local/share/cel/README.md) |
 | Skill `scout` de Claude Code | Clonar `YohaniIsaac/scout-skills` en `~/personal-git/` y `ln -s ~/personal-git/scout-skills ~/.claude/skills/scout` |
 | Repos personales y de trabajo | Clonarlos en `~/personal-git/` y `~/git/` |
 | Reglas udev de herramientas embebidas (OpenOCD, J-Link, Joulescope) | Vienen con cada herramienta; se reinstalan con ella |
