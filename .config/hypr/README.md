@@ -85,7 +85,7 @@ El compositor y lo que gira a su alrededor: atajos, reposo, pantalla de bloqueo 
 | `Super + Ctrl + Q` | Menú de salida (wlogout) |
 | `Super + Ctrl + R` | Recargar Hyprland |
 | `Super + Shift + A` | Activar/desactivar animaciones |
-| `Print` / `Super + Print` | Captura completa / de región (en `~/Pictures/Screenshots/`) |
+| `Print` / `Super + Print` | Captura completa / de región (en `~/Pictures/Screenshots/`, que el atajo crea si falta) |
 | `Super + Shift + rueda` / `Super + Shift + Z` | Zoom / restablecer zoom |
 | Teclas multimedia | Volumen, brillo y reproducción (Spotify tiene prioridad) |
 | `Caps Lock` mantenido + `h/j/k/l` | Scroll (Kanata) |
