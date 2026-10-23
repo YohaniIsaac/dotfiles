@@ -47,6 +47,7 @@ Siguiendo los pasos 18–25 de la [guía de instalación](INSTALL.md#post-instal
 | Claves SSH (y GPG, si usas) | Copiarlas o generarlas de nuevo (paso 20) |
 | Wallpapers (~215 MB) | `rsync` de `~/Pictures/wallpapers/` (paso 23) |
 | Perfil de Brave | Brave Sync |
+| Navegador por defecto (los enlaces que abren Discord, Spotify o la terminal) | `xdg-settings set default-web-browser brave-browser.desktop`. `~/.config/mimeapps.list` no va a git: los programas lo reescriben (Brave, `xdg-settings`, el instalador de Claude Code) |
 | Avatar de la pantalla de bloqueo | Copiar la foto como `~/.face` (sin ella se ve un icono) |
 | Fuentes Josefin Sans y Oxygen Mono (presets de la pantalla de bloqueo) | `~/.config/hypr/scripts/lock-font.sh install` (las baja de Google Fonts). Sin Josefin Sans el bloqueo usa `jetbrains` |
 | Ciudad del clima del bloqueo | Crear `~/.config/hypr/weather.conf` a mano (`LOCATION=…`, `COUNTRY=…`; ver [Pantalla de bloqueo](../hypr/LOCKSCREEN.md)). Es local, no está en git |
@@ -55,6 +56,7 @@ Siguiendo los pasos 18–25 de la [guía de instalación](INSTALL.md#post-instal
 | Skill `scout` de Claude Code | Clonar `YohaniIsaac/scout-skills` en `~/personal-git/` y `ln -s ~/personal-git/scout-skills ~/.claude/skills/scout` |
 | Repos personales y de trabajo | Clonarlos en `~/personal-git/` y `~/git/` |
 | Reglas udev de herramientas embebidas (OpenOCD, J-Link, Joulescope) | Vienen con cada herramienta; se reinstalan con ella |
+| Entorno de Python del Joulescope (`~/.local/bin/joulescope` lo lanza desde `~/.venv/joulescope`) | `python -m venv ~/.venv/joulescope && ~/.venv/joulescope/bin/pip install joulescope_ui` (aquí: 1.4.2). Los `.venv/` no van a git |
 
 Y esto es **específico de esta laptop**. No lo copies tal cual; revísalo:
 
