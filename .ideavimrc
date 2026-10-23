@@ -21,3 +21,8 @@ nnoremap gr :action ShowUsages<CR>
 nnoremap <leader>gr :action FindUsages<CR>
 nnoremap gi :action GotoImplementation<CR>
 nnoremap <leader>gh :action CallHierarchy<CR>
+
+" Búsqueda de texto en todo el proyecto (como snacks grep en nvim)
+nnoremap <leader>ps :action FindInPath<CR>
+nnoremap <leader>gg :action FindInPath<CR>
+vnoremap <leader>gg :action FindInPath<CR>
