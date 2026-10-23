@@ -56,6 +56,7 @@
 .gradle/
 .java/
 .joulescope/
+.TranslationPlugin/
 /Android/
 /go/
 
